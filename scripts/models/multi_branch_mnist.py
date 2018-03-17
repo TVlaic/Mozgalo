@@ -37,7 +37,7 @@ def create_weighted_binary_crossentropy(zero_weight, one_weight):
 def class_wise_binary_entropy(y_true, y_pred):
     number_of_classes = K.int_shape(y_pred)[1]
     loss = 0
-    weighted_binary_crossentropy = create_weighted_binary_crossentropy((number_of_classes-1.)/number_of_classes, 1./number_of_classes)
+    weighted_binary_crossentropy = create_weighted_binary_crossentropy(1./number_of_classes, (number_of_classes-1.)/number_of_classes)
     for i in range(number_of_classes):
         #loss += -tf.reduce_sum(y_true[:,i] * tf.log(y_pred[:,i]), axis=1)
         #loss += binary_crossentropy(y_true[:,i], y_pred[:,i])
