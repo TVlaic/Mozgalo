@@ -8,7 +8,7 @@ from keras.models import Model
 from keras.optimizers import Adam
 
 class BaseNetwork():
-    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "BaseNetwork"):
+    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "BaseNetwork", train = True):
         self.name = name
         self.config_dict = config_dict
 
@@ -17,7 +17,6 @@ class BaseNetwork():
         self.number_of_classes = int(self.config_dict['NumberOfClasses'])
 
         self.preprocessor = preprocessor
-        self.model = self.get_network()
 
         self.output_directory = output_directory
         self.full_path = os.path.join(os.path.expanduser(self.output_directory),self.name)
@@ -34,34 +33,40 @@ class BaseNetwork():
         self.tensorboard_dir_name = "tensorboard"
         self.tensorboard_path = os.path.join(self.full_checkpoint_dir_path,self.tensorboard_dir_name)
 
+        if train:
+            if not os.path.exists(self.full_path):
+                os.makedirs(self.full_path)
 
-        if not os.path.exists(self.full_path):
-            os.makedirs(self.full_path)
+            if not os.path.exists(self.root_checkpoint_path):
+                os.makedirs(self.root_checkpoint_path)
 
-        if not os.path.exists(self.root_checkpoint_path):
-            os.makedirs(self.root_checkpoint_path)
+            if not os.path.exists(self.full_checkpoint_dir_path):
+                os.makedirs(self.full_checkpoint_dir_path)
 
-        if not os.path.exists(self.full_checkpoint_dir_path):
-            os.makedirs(self.full_checkpoint_dir_path)
-
-        if not os.path.exists(self.tensorboard_path):
-            os.makedirs(self.tensorboard_path)
+            if not os.path.exists(self.tensorboard_path):
+                os.makedirs(self.tensorboard_path)
 
 
-        print("Imported and created %s" % self.name)
-        print("Network output path %s" % self.full_path)
-        print("Created root folder for network checkpoints %s" % self.root_checkpoint_path)
-        print("Created network checkpoint path %s" % self.full_checkpoint_dir_path)
-        print("Created tensorboard output dirs %s" %self.tensorboard_path)
+            print("Imported and created %s" % self.name)
+            print("Network output path %s" % self.full_path)
+            print("Created root folder for network checkpoints %s" % self.root_checkpoint_path)
+            print("Created network checkpoint path %s" % self.full_checkpoint_dir_path)
+            print("Created tensorboard output dirs %s" %self.tensorboard_path)
+
+    def init_network(self):
+        self.model = self.get_network()
 
     def get_network(self):
         pass
+
+    def get_additional_callbacks(self):
+        return [] #return array of new callbacks [EarlyStopping(..), ..]
 
     def fit_with_generator(self):
         train_generator = self.preprocessor.get_train_generator(self.batch_size)
         validation_generator = self.preprocessor.get_validation_generator(self.batch_size)
 
-        ckpt_name = "{epoch:04d}-{val_loss:.4f}.hdf5"
+        ckpt_name = "{val_loss:.4f}-{epoch:04d}.hdf5"
         full_ckpt_path = os.path.join(self.full_checkpoint_dir_path, ckpt_name)
 
         print(self.tensorboard_path)
@@ -74,10 +79,12 @@ class BaseNetwork():
                         epochs=self.num_of_epochs, 
                         callbacks=[
                                     TensorBoard(log_dir=self.tensorboard_path),
-                                    ModelCheckpoint(filepath=full_ckpt_path, mode = 'min', save_best_only = True, save_weights_only=True),
-                                    EarlyStopping(patience=20, verbose=1),
-                                    ReduceLROnPlateau(monitor='val_loss', factor= 0.5, patience = 10, min_lr = 1e-9)
-                                  ],
+                                    ModelCheckpoint(filepath=full_ckpt_path, mode = 'min', save_best_only = True, save_weights_only=True)
+                                  ] + self.get_additional_callbacks(),
+                        shuffle = True, #no effect if steps per epoch is not None
+                        use_multiprocessing= True,
+                        workers= 10,
+                        max_queue_size = 10 
                         )
 
         pass
@@ -88,7 +95,7 @@ class BaseNetwork():
         train_x, train_y = self.preprocessor.get_train()
         validation_x, validation_y = self.preprocessor.get_validation()
 
-        ckpt_name = "{epoch:04d}-{val_loss:.4f}.hdf5"
+        ckpt_name = "{val_loss:.4f}-{epoch:04d}.hdf5"
         full_ckpt_path = os.path.join(self.full_checkpoint_dir_path, ckpt_name)
 
         print(self.tensorboard_path)
@@ -101,10 +108,8 @@ class BaseNetwork():
                        validation_data=(validation_x, validation_y),
                        callbacks= [
                                     TensorBoard(log_dir=self.tensorboard_path),
-                                    ModelCheckpoint(filepath=full_ckpt_path, mode = 'min', save_best_only = True, save_weights_only=True),
-                                    EarlyStopping(patience=20, verbose=1),
-                                    ReduceLROnPlateau(monitor='val_loss', factor= 0.5, patience = 10, min_lr = 1e-9)
-                                  ],
+                                    ModelCheckpoint(filepath=full_ckpt_path, mode = 'min', save_best_only = True, save_weights_only=True)
+                                  ] + self.get_additional_callbacks(),
 
                       )
         pass

@@ -4,6 +4,16 @@ import configparser
 from shutil import copyfile
 from importlib import import_module
 
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+
+from PIL import ImageFile #jedan je buggy malo
+ImageFile.LOAD_TRUNCATED_IMAGES = True 
+from skimage.io import imread
+
+import warnings
+
 parser = argparse.ArgumentParser()
 parser.add_argument("ModelName", help= "Model class name")
 parser.add_argument("PreprocessorName", help = "Preprocessor class name")
@@ -40,10 +50,36 @@ result_path = data_parameters['Outputs']
 
 module = import_module("models.%s" % (module_name))
 ml_class= getattr(module, args.ModelName)
-my_model = ml_class(result_path, checkpoint_dir, model_parameters, preprocessor)
+my_model = ml_class(result_path, checkpoint_dir, model_parameters, preprocessor, train=False)
 my_model.init_network()
 
-# my_model.model.load_weights('/home/user/Mozgalo/checkpoints/MicroblinkBaseNet/MicroblinkBasePreprocessorWithFakes/2018-04-03__09_27_51/0.4697-0001.hdf5', by_name = True, skip_mismatch = True)
 
-copyfile("./config.cfg", os.path.join(my_model.full_checkpoint_dir_path,'config.cfg'))
-my_model.fit_with_generator()
+my_model.model.load_weights('/home/user/Mozgalo/checkpoints/MicroblinkBaseNet/MicroblinkBasePreprocessorWithFakes/2018-04-03__13_43_21/0.1612-0026.hdf5', by_name = True, skip_mismatch = True)
+
+root = '../inputs/test'
+root = os.path.abspath(root)
+warnings.simplefilter('ignore', DeprecationWarning) #zbog sklearna i numpy deprecationa u label encoderu
+key = lambda x: int(x.split('/')[-1].split('.')[0])
+threshold = 0.95 #dalo 0.68  rezultat
+
+results = []
+for file_name in tqdm(sorted(os.listdir(root), key = key)):
+    full_path = os.path.join(root, file_name)
+    image = imread(full_path)
+    image = preprocessor.process_data(image)
+    image = np.expand_dims(image,axis=0)
+    result = my_model.model.predict(image)[0]
+
+    max_ind = np.argmax(result)
+    max_prob = result[max_ind]
+    if max_prob < threshold:
+        results.append("Other")
+    else:
+        class_name = preprocessor.le.inverse_transform(max_ind)
+        results.append(class_name)
+
+
+sub = pd.DataFrame()
+sub['Results'] = results
+sub.to_csv('Mozgalo.csv', index=False, header=False)
+print(len(results))

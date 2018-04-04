@@ -17,14 +17,11 @@ class BasePreprocessor():
         self.TRAIN_PATH = os.path.abspath(os.path.join(self.input_directory, 'train'))
         self.TEST_PATH = os.path.abspath(os.path.join(self.input_directory, 'test'))
 
-        print(self.TRAIN_PATH)
-        self.train_ids = next(os.walk(self.TRAIN_PATH))[1]
-        self.test_ids = next(os.walk(self.TEST_PATH))[1]
 
         #np.random.seed(10)
 
     def get_shape(self):
-        return (self.IMG_WIDTH, self.IMG_HEIGHT, self.IMG_CHANNELS)
+        return (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS)
 
     def process_data(self, x):
         pass

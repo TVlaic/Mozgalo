@@ -12,8 +12,8 @@ from .custom_layers.SpatialTransformLayer import SpatialTransformLayer
 
 
 class MnistSpatialTransformNet(BaseNetwork):
-    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "MnistSpatialTransformNet"):
-        BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name)
+    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "MnistSpatialTransformNet", train = True):
+        BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name, train = train)
 
     def get_network(self):
         # initial weights for localization network

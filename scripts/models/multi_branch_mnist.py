@@ -45,8 +45,8 @@ def class_wise_binary_entropy(y_true, y_pred):
     return loss
 
 class MultiBranchMnist(BaseNetwork):
-    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "MultiBranchMnist"):
-        BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name)
+    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "MultiBranchMnist", train = True):
+        BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name, train = train)
 
 
     def get_network(self):
