@@ -12,14 +12,14 @@ from keras.utils import Sequence
 from .base_preprocessor import BasePreprocessor
 
 class GeneratorWrapper(Sequence):
-    def __init__(self, x, y, datagen, batch_size, image_shape, keyword_args, top_side_only = False):
+    def __init__(self, x, y, datagen, batch_size, image_shape, keyword_args, preprocess_data_func):
         self.x, self.y = x, y
         self.datagen = datagen
         self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS = image_shape
         self.batch_size = batch_size
         self.keyword_args = keyword_args
         self.epoch_num = 0
-        self.top_side_only = top_side_only
+        self.preprocess_data = preprocess_data_func
 
     def __len__(self):
         return int(np.ceil(len(self.x) / float(self.batch_size)))
@@ -32,18 +32,17 @@ class GeneratorWrapper(Sequence):
         Y = np.zeros((self.batch_size, batch_y.shape[1]))
 
         cut_off_fake_examples = 0.3
-
+        flip = False
+        if len(self.keyword_args) > 0:
+            flip = True
         for i, ind in enumerate(batch_x):
-            image = imread(batch_x[i])
-            if batch_y[i][0] != 1 and batch_y[i][0] !=0: #fake empty example
-                image = image[int(cut_off_fake_examples*image.shape[0]):]
-            elif self.top_side_only:
-                image = image[:image.shape[0]//4]
+            image = self.preprocess_data(batch_x[i])
 
-            image = resize(image, (self.IMG_HEIGHT, self.IMG_WIDTH))#, mode='constant', preserve_range=True)    
-            if len(image.shape) != 3:
-                image = np.dstack([image,image,image])
             X1[i] = self.datagen.random_transform(image)
+            if flip and np.random.rand() < 1./20:
+                X1[i] = np.fliplr(X1[i])
+                Y[i] = np.zeros((1, batch_y.shape[1])) + 1./25.
+                continue
             Y[i] = batch_y[i]
         return X1, Y
 
@@ -92,21 +91,11 @@ class MicroblinkBasePreprocessorWithFakes(BasePreprocessor):
         self.X_train, self.X_validation, self.y_train, self.y_validation = train_test_split(self.X_train, self.y_train, test_size=self.TEST_PERCENTAGE, random_state=42, stratify=self.y_train)
 
 
-        indices = np.random.permutation(np.arange(len(self.X_train)))[:len(self.X_train)//len(set(self.le.classes_))]
         self.X_train = np.array(self.X_train)
-        self.X_train = np.concatenate((self.X_train, self.X_train[indices]), axis=0)
         self.y_train = np_utils.to_categorical(self.y_train, len(set(self.le.classes_)))
-        targets = np.zeros((self.X_train.shape[0]//len(self.le.classes_), len(set(self.le.classes_))))+ 1./len(set(self.le.classes_))
-        self.y_train = np.vstack((self.y_train, targets))
 
-
-
-        indices = np.random.permutation(np.arange(len(self.X_validation)))[:len(self.X_validation)//len(self.le.classes_)]
         self.X_validation = np.array(self.X_validation)
-        self.X_validation = np.concatenate((self.X_validation, self.X_validation[indices]), axis=0)
         self.y_validation = np_utils.to_categorical(self.y_validation, len(set(self.le.classes_)))
-        targets = np.zeros((self.X_train.shape[0]//len(self.le.classes_), len(set(self.le.classes_))))+ 1./len(set(self.le.classes_))
-        self.y_validation = np.vstack((self.y_validation, targets))
 
     def get_train_steps(self):
         return None #because i got the sequential wrapper for generating data  self.X_train.shape[0]/self.TRAIN_BATCH_SIZE
@@ -118,11 +107,17 @@ class MicroblinkBasePreprocessorWithFakes(BasePreprocessor):
         pass
 
     def process_data(self, x):
+        x = imread(x, as_grey = self.IMG_CHANNELS==1)
+
         if self.top_side_only:
-            x = x[:x.shape[0]//4]
-        x = resize(x, (self.IMG_HEIGHT, self.IMG_WIDTH))#, mode='constant', preserve_range=True)
-        if len(x.shape) != 3:
+            x = x[:x.shape[0]//3]
+
+        x = resize(x, (self.IMG_HEIGHT, self.IMG_WIDTH), mode='constant')#, mode='constant', preserve_range=True)
+        if len(x.shape) != 3 and self.IMG_CHANNELS == 3:
             x = np.dstack([x,x,x])
+            x = x/255.
+        elif self.IMG_CHANNELS == 1:
+            x = x.reshape((self.IMG_HEIGHT, self.IMG_WIDTH, 1))
         return x
 
     def generator_wrapper(self, x, y, datagen, batch_size, shuffle = True):
@@ -157,7 +152,7 @@ class MicroblinkBasePreprocessorWithFakes(BasePreprocessor):
         image_datagen = image.ImageDataGenerator()
 
         # return self.generator_wrapper(self.X_train, self.y_train, image_datagen, batch_size)
-        return GeneratorWrapper(self.X_train, self.y_train, image_datagen, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), datagen_args, self.top_side_only)
+        return GeneratorWrapper(self.X_train, self.y_train, image_datagen, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), datagen_args, self.process_data)
 
     def get_validation_generator(self, batch_size): 
         self.VALIDATION_BATCH_SIZE = batch_size
@@ -165,7 +160,7 @@ class MicroblinkBasePreprocessorWithFakes(BasePreprocessor):
         image_datagen = image.ImageDataGenerator()
 
         # return self.generator_wrapper(self.X_validation, self.y_validation, image_datagen, batch_size, shuffle=False)
-        return GeneratorWrapper(self.X_validation, self.y_validation, image_datagen, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), {}, self.top_side_only)
+        return GeneratorWrapper(self.X_validation, self.y_validation, image_datagen, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), {}, self.process_data)
 
     def get_test_generator(self, batch_size):
         pass

@@ -43,7 +43,7 @@ ml_class= getattr(module, args.ModelName)
 my_model = ml_class(result_path, checkpoint_dir, model_parameters, preprocessor)
 my_model.init_network()
 
-# my_model.model.load_weights('/home/user/Mozgalo/checkpoints/MicroblinkBaseNet/MicroblinkBasePreprocessorWithFakes/2018-04-03__09_27_51/0.4697-0001.hdf5', by_name = True, skip_mismatch = True)
+# my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionNet/MicroblinkBasePreprocessorWithFakes/2018-04-12__12_35_19/0.0256-0001.hdf5', by_name = True, skip_mismatch = True)
 
 copyfile("./config.cfg", os.path.join(my_model.full_checkpoint_dir_path,'config.cfg'))
 my_model.fit_with_generator()

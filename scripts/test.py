@@ -54,8 +54,8 @@ my_model = ml_class(result_path, checkpoint_dir, model_parameters, preprocessor,
 my_model.init_network()
 
 
-my_model.model.load_weights('/home/user/Mozgalo/checkpoints/MicroblinkBaseNet/MicroblinkBasePreprocessorWithFakes/2018-04-03__13_43_21/0.1612-0026.hdf5', by_name = True, skip_mismatch = True)
-
+my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionNet/MicroblinkBasePreprocessorWithFakes/2018-04-12__12_35_19/0.0256-0001.hdf5', by_name = True, skip_mismatch = True)
+# raise Exception("definiraj model")
 root = '../inputs/test'
 root = os.path.abspath(root)
 warnings.simplefilter('ignore', DeprecationWarning) #zbog sklearna i numpy deprecationa u label encoderu
@@ -65,8 +65,9 @@ threshold = 0.95 #dalo 0.68  rezultat
 results = []
 for file_name in tqdm(sorted(os.listdir(root), key = key)):
     full_path = os.path.join(root, file_name)
-    image = imread(full_path)
-    image = preprocessor.process_data(image)
+    # image = imread(full_path)
+    # image = preprocessor.process_data(image)
+    image = preprocessor.process_data(full_path)
     image = np.expand_dims(image,axis=0)
     result = my_model.model.predict(image)[0]
 

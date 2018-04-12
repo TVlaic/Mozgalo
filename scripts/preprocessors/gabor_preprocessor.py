@@ -28,14 +28,16 @@ class GeneratorWrapper(Sequence):
         batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
         batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
 
-        X1 = np.zeros((self.batch_size, self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS))
+        X1 = np.zeros((self.batch_size, 4, self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS))
         Y = np.zeros((self.batch_size, batch_y.shape[1]))
 
         for i, ind in enumerate(batch_x):
             image = self.preprocess_data(batch_x[i])
 
-            X1[i] = self.datagen.random_transform(image)
+            # X1[i] = self.datagen.random_transform(image)
+            X1[i] = image
             Y[i] = batch_y[i]
+        
         return X1, Y
 
     def on_epoch_end(self):
@@ -55,8 +57,8 @@ class GeneratorWrapper(Sequence):
 
         self.datagen = image.ImageDataGenerator(**new_datagen)
 
-class MicroblinkBasePreprocessor(BasePreprocessor):
-    def __init__(self, input_directory, config_dict, name = "MicroblinkBasePreprocessor"):
+class GaborPreprocessor(BasePreprocessor):
+    def __init__(self, input_directory, config_dict, name = "GaborPreprocessor"):
         BasePreprocessor.__init__(self, input_directory, config_dict, name = name)
         self.top_side_only = bool(config_dict['TopSideOnly'])
 
@@ -95,6 +97,8 @@ class MicroblinkBasePreprocessor(BasePreprocessor):
     def get_test_steps(self):
         pass
 
+    def get_shape(self):
+        return (4, self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS)
     def process_data(self, x):
         x = imread(x, as_grey = self.IMG_CHANNELS==1)
 
@@ -107,6 +111,9 @@ class MicroblinkBasePreprocessor(BasePreprocessor):
             x = x/255.
         elif self.IMG_CHANNELS == 1:
             x = x.reshape((self.IMG_HEIGHT, self.IMG_WIDTH, 1))
+
+        #test = np.expand_dims(x, axis=0)
+        x = np.stack([x,x,x,x], axis=0)
         return x
 
     def generator_wrapper(self, x, y, datagen, batch_size, shuffle = True):

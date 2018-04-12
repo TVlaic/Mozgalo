@@ -38,10 +38,20 @@ class OutputsCallback(keras.callbacks.Callback):
         X1 = np.zeros((6,self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS))
         indices = np.random.randint(0, self.paths.shape[0], 3)
         for i, ind in enumerate(indices):
-            image = imread(self.paths[ind])
+            # image = imread(self.paths[ind])
+            # image = resize(image, (self.IMG_HEIGHT, self.IMG_WIDTH))
+            # if len(image.shape) != 3:
+            #     image = np.dstack([image,image,image])
+
+
+            image = imread(self.paths[ind], as_grey = self.IMG_CHANNELS==1)
             image = resize(image, (self.IMG_HEIGHT, self.IMG_WIDTH))
-            if len(image.shape) != 3:
+            if len(image.shape) != 3 and self.IMG_CHANNELS == 3:
                 image = np.dstack([image,image,image])
+                image = image/255.
+            elif self.IMG_CHANNELS == 1:
+                image = image.reshape((self.IMG_HEIGHT, self.IMG_WIDTH, 1))    
+
             X1[i] = image
 
         Xresult = self.F([X1])
@@ -53,7 +63,11 @@ class OutputsCallback(keras.callbacks.Callback):
                 image = X1[i-3]
             else:
                 image = (Xresult[0][i]*255).astype(np.uint8)
-            plt.imshow(image)
+
+            if image.shape[2]==1:
+                plt.imshow(np.squeeze(image))
+            else:
+                plt.imshow(image)
             plt.axis('off')
         plt.savefig('../outputs/MicroblinkBaseNet/%s.png' % batch)
         plt.close()
@@ -165,4 +179,4 @@ class MicroblinkBaseNet(BaseNetwork):
         return model
 
     def get_additional_callbacks(self):
-        return [OutputsCallback(self.transformation_operation, self.preprocessor.X_train, self.preprocessor.IMG_HEIGHT, self.preprocessor.IMG_WIDTH, self.preprocessor.IMG_CHANNELS)] #return array of new callbacks [EarlyStopping(..), ..]
+        return []#[OutputsCallback(self.transformation_operation, self.preprocessor.X_train, self.preprocessor.IMG_HEIGHT, self.preprocessor.IMG_WIDTH, self.preprocessor.IMG_CHANNELS)] #return array of new callbacks [EarlyStopping(..), ..]
