@@ -12,14 +12,17 @@ from keras.utils import Sequence
 from .base_preprocessor import BasePreprocessor
 
 class GeneratorWrapper(Sequence):
-    def __init__(self, x, y, datagen, batch_size, image_shape, keyword_args, preprocess_data_func):
+    def __init__(self, x, y, curiculum_epochs, batch_size, image_shape, keyword_args, preprocess_data_func):
         self.x, self.y = x, y
-        self.datagen = datagen
+        # self.datagen = datagen
         self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS = image_shape
         self.batch_size = batch_size
         self.keyword_args = keyword_args
         self.epoch_num = 0
         self.preprocess_data = preprocess_data_func
+        self.curiculum_epochs = curiculum_epochs
+        self.datagen = self.create_datagen()
+
 
     def __len__(self):
         return int(np.ceil(len(self.x) / float(self.batch_size)))
@@ -42,18 +45,36 @@ class GeneratorWrapper(Sequence):
         """Method called at the end of every epoch.
         """
         self.epoch_num +=1
-        curiculum_epochs = 4
-        if len(self.keyword_args.keys()) == 0:
-            return
-        weight = min(1, self.epoch_num/curiculum_epochs)
-        new_datagen = {}
-        for key in self.keyword_args:
-            if isinstance(self.keyword_args[key], numbers.Number):
-                new_datagen[key] = self.keyword_args[key] * weight
-            else:
-                new_datagen[key] = self.keyword_args[key]
+        self.datagen = self.create_datagen()
+        # curiculum_epochs = 4
+        # if len(self.keyword_args.keys()) == 0:
+        #     return
+        # weight = min(1, self.epoch_num/curiculum_epochs)
+        # new_datagen = {}
+        # for key in self.keyword_args:
+        #     if isinstance(self.keyword_args[key], numbers.Number):
+        #         new_datagen[key] = self.keyword_args[key] * weight
+        #     else:
+        #         new_datagen[key] = self.keyword_args[key]
 
-        self.datagen = image.ImageDataGenerator(**new_datagen)
+        # self.datagen = image.ImageDataGenerator(**new_datagen)
+
+    def create_datagen(self):
+        if len(self.keyword_args.keys()) == 0:
+            return image.ImageDataGenerator()
+        else:
+            if self.curiculum_epochs == 0:
+                weight = 1
+            else:
+                weight = min(1, self.epoch_num/self.curiculum_epochs)
+            new_datagen = {}
+            for key in self.keyword_args:
+                if isinstance(self.keyword_args[key], numbers.Number):
+                    new_datagen[key] = self.keyword_args[key] * weight
+                else:
+                    new_datagen[key] = self.keyword_args[key]
+
+            return image.ImageDataGenerator(**new_datagen)
 
 class MicroblinkBasePreprocessor(BasePreprocessor):
     def __init__(self, input_directory, config_dict, name = "MicroblinkBasePreprocessor"):
@@ -67,6 +88,7 @@ class MicroblinkBasePreprocessor(BasePreprocessor):
         self.height_shift_range = float(config_dict['HeightShiftRange']) if 'HeightShiftRange' in config_dict  else 0.
         self.shear_range = float(config_dict['ShearRange']) if 'ShearRange' in config_dict  else 0.
         self.rotation_range = int(config_dict['RotationRange']) if 'RotationRange' in config_dict  else 0
+        self.curiculum_epochs = int(config_dict['CuriculumEpochs']) if 'CuriculumEpochs' in config_dict else 0
 
         self.le = preprocessing.LabelEncoder()
         self.X_train = []
@@ -138,18 +160,18 @@ class MicroblinkBasePreprocessor(BasePreprocessor):
                             rotation_range = self.rotation_range)
 
         # image_datagen = image.ImageDataGenerator(**datagen_args)
-        image_datagen = image.ImageDataGenerator()
+        # image_datagen = image.ImageDataGenerator()
 
         # return self.generator_wrapper(self.X_train, self.y_train, image_datagen, batch_size)
-        return GeneratorWrapper(self.X_train, self.y_train, image_datagen, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), datagen_args, self.process_data)
+        return GeneratorWrapper(self.X_train, self.y_train, self.curiculum_epochs, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), datagen_args, self.process_data)
 
     def get_validation_generator(self, batch_size): 
         self.VALIDATION_BATCH_SIZE = batch_size
 
-        image_datagen = image.ImageDataGenerator()
+        # image_datagen = image.ImageDataGenerator()
 
         # return self.generator_wrapper(self.X_validation, self.y_validation, image_datagen, batch_size, shuffle=False)
-        return GeneratorWrapper(self.X_validation, self.y_validation, image_datagen, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), {}, self.process_data)
+        return GeneratorWrapper(self.X_validation, self.y_validation, self.curiculum_epochs, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), {}, self.process_data)
 
     def get_test_generator(self, batch_size):
         pass

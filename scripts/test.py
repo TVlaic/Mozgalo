@@ -54,15 +54,16 @@ my_model = ml_class(result_path, checkpoint_dir, model_parameters, preprocessor,
 my_model.init_network()
 
 
-my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionNet/MicroblinkBasePreprocessorWithFakes/2018-04-12__12_35_19/0.0256-0001.hdf5', by_name = True, skip_mismatch = True)
+my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionNetSmall/MicroblinkBasePreprocessorWithFakes/2018-04-15__22_18_56/0.0167-0022.hdf5', by_name = True, skip_mismatch = True)
 # raise Exception("definiraj model")
 root = '../inputs/test'
 root = os.path.abspath(root)
 warnings.simplefilter('ignore', DeprecationWarning) #zbog sklearna i numpy deprecationa u label encoderu
 key = lambda x: int(x.split('/')[-1].split('.')[0])
-threshold = 0.95 #dalo 0.68  rezultat
-
+threshold = 0.95 # 0.95 resnet attention dao   F1=0.81882
 results = []
+confidence = []
+original_results = []
 for file_name in tqdm(sorted(os.listdir(root), key = key)):
     full_path = os.path.join(root, file_name)
     # image = imread(full_path)
@@ -73,14 +74,18 @@ for file_name in tqdm(sorted(os.listdir(root), key = key)):
 
     max_ind = np.argmax(result)
     max_prob = result[max_ind]
+    class_name = preprocessor.le.inverse_transform(max_ind)
     if max_prob < threshold:
         results.append("Other")
     else:
-        class_name = preprocessor.le.inverse_transform(max_ind)
         results.append(class_name)
 
-
+    original_results.append(class_name)
+    confidence.append(max_prob)
 sub = pd.DataFrame()
 sub['Results'] = results
 sub.to_csv('Mozgalo.csv', index=False, header=False)
 print(len(results))
+sub['Results'] = original_results
+sub['Confidence'] = confidence
+sub.to_csv('SubmissionWithConfidence.csv', index=False, header=False)

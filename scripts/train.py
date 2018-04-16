@@ -4,6 +4,13 @@ import configparser
 from shutil import copyfile
 from importlib import import_module
 
+
+#pip install tf-nightly-gpu
+#pip install toposort networkx pytest
+# from tensorflow.python.keras._impl.keras import backend as K
+# import memory_saving_gradients
+# K.__dict__["gradients"] = memory_saving_gradients.gradients_memory
+
 parser = argparse.ArgumentParser()
 parser.add_argument("ModelName", help= "Model class name")
 parser.add_argument("PreprocessorName", help = "Preprocessor class name")
