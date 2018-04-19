@@ -126,7 +126,6 @@ class MicroblinkBasePreprocessor(BasePreprocessor):
         x = resize(x, (self.IMG_HEIGHT, self.IMG_WIDTH), mode='constant')#, mode='constant', preserve_range=True)
         if len(x.shape) != 3 and self.IMG_CHANNELS == 3:
             x = np.dstack([x,x,x])
-            x = x/255.
         elif self.IMG_CHANNELS == 1:
             x = x.reshape((self.IMG_HEIGHT, self.IMG_WIDTH, 1))
         return x

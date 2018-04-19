@@ -20,6 +20,8 @@ from .custom_layers.SpatialTransformLayer import SpatialTransformLayer
 
 from skimage.transform import resize
 from skimage.io import imread
+
+import tensorflow as tf
 import matplotlib.pyplot as plt
 
 
@@ -66,6 +68,7 @@ def ResidualAttention(inputs, p = 1, t = 2, r = 1):
         output_trunk = Residual(num_channels, num_channels, output_trunk)
         
 
+    size1 = first_residuals._keras_shape[1:3]
     output_soft_mask = MaxPooling2D(pool_size=(2,2), padding='same')(first_residuals) 
     for i in range(r):
         output_soft_mask = Residual(num_channels, num_channels, output_soft_mask)
@@ -73,20 +76,31 @@ def ResidualAttention(inputs, p = 1, t = 2, r = 1):
     #skip connection
     output_skip_connection = Residual(num_channels, num_channels, output_soft_mask)
     
-    #2r residual blocks and first upsampling
-    output_soft_mask = MaxPooling2D(pool_size=(2,2), padding='same')(output_soft_mask)  
+    #2r residual blocks and first upsampling 
+    size2 = output_soft_mask._keras_shape[1:3]
+    output_soft_mask = MaxPooling2D(pool_size=(2,2), padding='same')(output_soft_mask) 
     for i in range(2*r):
         output_soft_mask = Residual(num_channels, num_channels, output_soft_mask)
-    output_soft_mask = UpSampling2D([2, 2])(output_soft_mask)
+    # output_soft_mask = UpSampling2D([2, 2])(output_soft_mask)
+    output_soft_mask = Lambda(lambda x: tf.image.resize_images(x,
+                                                size2,
+                                                method=tf.image.ResizeMethod.BILINEAR,
+                                                align_corners=False
+                                            ))(output_soft_mask)
+
 
 
     #addition of the skip connection
-    output_soft_mask = add([output_soft_mask, output_skip_connection])         
-    
+    output_soft_mask = add([output_soft_mask, output_skip_connection])    
     #last r blocks of residuals and upsampling
     for i in range(r):
         output_soft_mask = Residual(num_channels, num_channels, output_soft_mask)
-    output_soft_mask = UpSampling2D([2, 2])(output_soft_mask)
+    # output_soft_mask = UpSampling2D([2, 2])(output_soft_mask)
+    output_soft_mask = Lambda(lambda x: tf.image.resize_images(x,
+                                                size1,
+                                                method=tf.image.ResizeMethod.BILINEAR,
+                                                align_corners=False
+                                            ))(output_soft_mask)
     
     #final attention output
     output_soft_mask = Conv2D(num_channels, (1,1), activation='relu')(output_soft_mask)
@@ -100,8 +114,8 @@ def ResidualAttention(inputs, p = 1, t = 2, r = 1):
     return output
 
 
-class ResidualAttentionNetSmall(BaseNetwork):
-    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionNetSmall", train = True):
+class ResidualAttentionNetSmallDifferentInterpolation(BaseNetwork):
+    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionNetSmallDifferentInterpolation", train = True):
         BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name, train = train)
         self.p = int(config_dict['p'])
         self.r = int(config_dict['r'])
@@ -110,8 +124,9 @@ class ResidualAttentionNetSmall(BaseNetwork):
     def get_network(self):
 
         inputs = Input(self.preprocessor.get_shape())
+        outputs = Lambda(lambda x: (x /255. -0.5) * 2)(inputs)
 
-        outputs = Conv2D(8, (7, 7), strides = [1,1], padding='same', activation = 'relu', name = 'classification_conv_1')(inputs)
+        outputs = Conv2D(8, (7, 7), strides = [2,2], padding='same', activation = 'relu', name = 'classification_conv_1')(outputs)
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_1')(outputs)
 
         outputs = Residual(8, 16, outputs)
@@ -125,9 +140,12 @@ class ResidualAttentionNetSmall(BaseNetwork):
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_4')(outputs)
         outputs = Residual(64, 128, outputs)
 
-        # outputs = GlobalAveragePooling2D()(outputs)
-        outputs = GlobalMaxPooling2D()(outputs)
-        outputs = Dense(256, activation = 'relu', name = 'classification_dense_1')(outputs)
+        outputs = BatchNormalization()(outputs) 
+        outputs = GlobalAveragePooling2D()(outputs)
+        # outputs = GlobalMaxPooling2D()(outputs)
+        outputs = Dense(256, name = 'classification_dense_1', use_bias = False)(outputs)
+        outputs = BatchNormalization()(outputs) 
+        outputs = Activation('relu')(outputs)
         outputs = Dense(self.number_of_classes, activation='softmax', name = 'classification_dense_probs')(outputs)
 
         model = Model(inputs=[inputs], outputs=[outputs])

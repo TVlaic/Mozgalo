@@ -54,38 +54,43 @@ my_model = ml_class(result_path, checkpoint_dir, model_parameters, preprocessor,
 my_model.init_network()
 
 
-my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionNetSmall/MicroblinkBasePreprocessorWithFakes/2018-04-15__22_18_56/0.0167-0022.hdf5', by_name = True, skip_mismatch = True)
+my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-18__18_22_29/0.0341-0011.hdf5', by_name = True, skip_mismatch = True)
 # raise Exception("definiraj model")
 root = '../inputs/test'
 root = os.path.abspath(root)
 warnings.simplefilter('ignore', DeprecationWarning) #zbog sklearna i numpy deprecationa u label encoderu
 key = lambda x: int(x.split('/')[-1].split('.')[0])
-threshold = 0.95 # 0.95 resnet attention dao   F1=0.81882
+
+threshold = 0.95 # 0.95 resnet s center lossom dao 0.901
 results = []
 confidence = []
 original_results = []
+cnt_others = 0
 for file_name in tqdm(sorted(os.listdir(root), key = key)):
     full_path = os.path.join(root, file_name)
     # image = imread(full_path)
     # image = preprocessor.process_data(image)
     image = preprocessor.process_data(full_path)
     image = np.expand_dims(image,axis=0)
-    result = my_model.model.predict(image)[0]
+    # result = my_model.model.predict(image)[0]
+    result = my_model.model.predict([image, np.random.rand(1,1)])[0][0]
 
     max_ind = np.argmax(result)
     max_prob = result[max_ind]
     class_name = preprocessor.le.inverse_transform(max_ind)
     if max_prob < threshold:
         results.append("Other")
+        cnt_others += 1 
     else:
         results.append(class_name)
+    # results.append(class_name)
 
     original_results.append(class_name)
     confidence.append(max_prob)
 sub = pd.DataFrame()
 sub['Results'] = results
 sub.to_csv('Mozgalo.csv', index=False, header=False)
-print(len(results))
+print(len(results), " - Number of others = %d " % cnt_others) 
 sub['Results'] = original_results
 sub['Confidence'] = confidence
 sub.to_csv('SubmissionWithConfidence.csv', index=False, header=False)
