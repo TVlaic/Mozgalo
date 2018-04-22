@@ -114,8 +114,8 @@ def ResidualAttention(inputs, p = 1, t = 2, r = 1):
     return output
 
 
-class ResidualAttentionNetSmallDifferentInterpolationCenterLoss(BaseNetwork):
-    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionNetSmallDifferentInterpolationCenterLoss", train = True):
+class ResidualAttentionNetVerySmallDifferentInterpolationCenterLoss(BaseNetwork):
+    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionNetVerySmallDifferentInterpolationCenterLoss", train = True):
         BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name, train = train)
         self.p = int(config_dict['p'])
         self.r = int(config_dict['r'])
@@ -123,34 +123,49 @@ class ResidualAttentionNetSmallDifferentInterpolationCenterLoss(BaseNetwork):
         self.center_loss_strength = float(config_dict['CenterLossStrength']) if 'CenterLossStrength' in config_dict  else 0.5
 
     def get_network(self):
-
         inputs = Input(self.preprocessor.get_shape())
         outputs = Lambda(lambda x: (x /255. -0.5) * 2)(inputs)
 
-        outputs = Conv2D(8, (7, 7), strides = [2,2], padding='same', activation = 'relu', name = 'classification_conv_1')(outputs)
+        # outputs = Conv2D(4, (7, 7), strides = [2,2], padding='same', activation = 'relu', name = 'classification_conv_1')(outputs)
+        # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_1')(outputs)
+
+        # outputs = Residual(4, 8, outputs)
+        # outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
+        # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_2')(outputs)
+        # outputs = Residual(8, 16, outputs)
+        # # outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
+        # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_3')(outputs) 
+        # outputs = Residual(16, 32, outputs)
+        # outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
+        # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_4')(outputs)
+        # outputs = Residual(32, 64, outputs)
+
+        outputs = Conv2D(4, (7, 7), strides = [2,2], padding='same', activation = 'relu', name = 'classification_conv_1')(outputs)
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_1')(outputs)
 
+        outputs = Residual(4, 8, outputs)
+        # outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
+        outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_2')(outputs)
         outputs = Residual(8, 16, outputs)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
-        outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_2')(outputs)
-        outputs = Residual(16, 32, outputs)
-        outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_3')(outputs) 
-        outputs = Residual(32, 64, outputs)
-        outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
+        outputs = Residual(16, 32, outputs)
+        # outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_4')(outputs)
-        outputs = Residual(64, 128, outputs)
+        outputs = Residual(32, 32, outputs)
+        outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_5')(outputs)
+        outputs = Residual(32, 32, outputs)
 
         outputs = BatchNormalization()(outputs) 
         outputs = GlobalAveragePooling2D()(outputs)
         # outputs = GlobalMaxPooling2D()(outputs)
-        outputs = Dense(256, name = 'classification_dense_1', activation='relu')(outputs)
+        outputs = Dense(64, name = 'classification_dense_1', activation='relu')(outputs)
         center_loss_layer = outputs
         outputs = Dense(self.number_of_classes, activation='softmax', name = 'class_prob')(center_loss_layer)
 
         lambda_c = self.center_loss_strength
         input_target = Input(shape=(1,)) # single value ground truth labels as inputs
-        centers = Embedding(self.number_of_classes,256)(input_target)
+        centers = Embedding(self.number_of_classes,64)(input_target)
         l2_loss = Lambda(lambda x: K.sum(K.square(x[0]-x[1][:,0]),1,keepdims=True),name='l2_loss')([center_loss_layer,centers])
         model = Model(inputs=[inputs,input_target],outputs=[outputs,l2_loss])        
         model.compile(loss=["categorical_crossentropy", lambda y_true,y_pred: y_pred],loss_weights=[1,lambda_c], optimizer=Adam(0.0001), metrics=[categorical_accuracy])

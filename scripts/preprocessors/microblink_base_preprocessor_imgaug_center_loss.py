@@ -21,10 +21,11 @@ def get_img_aug():
     [
         sometimes(iaa.Affine(
             #nisam siguran za ovaj scaling tho
-            scale={"x": (0.7, 1.0), "y": (0.7, 1.0)}, # scale images to 80-120% of their size, individually per axis
+            scale={"x": (0.9, 1.0), "y": (0.9, 1.0)}, # scale images to 80-120% of their size, individually per axis
             translate_percent={"x": (-0.1, 0.1), "y": (0., 0.)}, # translate by -10 to +10 percent (per axis)
             rotate=(-15, 15), # rotate by -15 to +15 degrees
-            #order=[1], # use nearest neighbour or bilinear interpolation (fast)
+            # rotate=(-20, 20), # rotate by -15 to +15 degrees
+            # shear=(-15, 15), # shear by -16 to +16 degrees
             cval=(0, 255), # if mode is constant, use a cval between 0 and 255
             mode="constant" # use any of scikit-image's warping modes (see 2nd image from the top for examples)
         )),
@@ -37,13 +38,14 @@ def get_img_aug():
                     iaa.AverageBlur(k=(2, 5)), # blur image using local means with kernel sizes between 2 and 5
                     iaa.MedianBlur(k=(3, 5)), # blur image using local medians with kernel sizes between 2 and 5
                 ]),
-                iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05*255), per_channel=0.5),
+                iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.1*255), per_channel=0.5),
                 iaa.Dropout((0.01, 0.1), per_channel=0.5),
                 iaa.Add((-10, 10), per_channel=0.5), # change brightness of images (by -10 to 10 of original value)
                 # either change the brightness of the whole image (sometimes
                 # per channel) or change the brightness of subareas
                 iaa.Multiply((0.5, 1.5), per_channel=0.5),
-
+                iaa.ElasticTransformation(alpha=(0.5, 2.), sigma=0.2),
+                iaa.PerspectiveTransform(scale=(0.01, 0.075))
                 #only works for colored images
                 #iaa.AddToHueAndSaturation((-20, 20)), # change hue and saturation
                 #iaa.ContrastNormalization((0.5, 2.0), per_channel=0.5), # improve or worsen the contrast
