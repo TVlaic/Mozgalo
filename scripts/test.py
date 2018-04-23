@@ -1,4 +1,6 @@
 import os
+# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+# os.environ["CUDA_VISIBLE_DEVICES"] = ""
 import argparse
 import configparser
 from shutil import copyfile
@@ -54,7 +56,7 @@ my_model = ml_class(result_path, checkpoint_dir, model_parameters, preprocessor,
 my_model.init_network()
 
 
-my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionNetVerySmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-22__17_07_11/0.0257-0052.hdf5', by_name = True, skip_mismatch = True)
+my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-23__13_07_32/0.0294-0019.hdf5', by_name = True, skip_mismatch = True)
 # raise Exception("definiraj model")
 root = '../inputs/test'
 root = os.path.abspath(root)

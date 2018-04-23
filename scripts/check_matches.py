@@ -8,8 +8,8 @@ number_of_others = 0
 cnt_prob = 0
 with open('./current_best.csv', 'r') as f1:
     with open('./Mozgalo.csv', 'r') as f2:
-# with open('/home/user/Mozgalo/outputs/results_for_ansambling/ResidualAttentionNet_MicroblinkBasePreprocessorWithFakes_2018-04-13__12_53_55_0.0138-0027.csv', 'r') as f1:
-#     with open('/home/user/Mozgalo/outputs/results_for_ansambling/ResidualAttentionNetSmall_MicroblinkBasePreprocessorWithFakes_2018-04-14__18_25_35_0.0128-0045.csv', 'r') as f2:
+# with open('/home/user/Mozgalo/outputs/results_for_ansambling/SubmissionWithConfidence_third.csv', 'r') as f1:
+#     with open('/home/user/Mozgalo/outputs/results_for_ansambling/SubmissionWithConfidenceFourth.csv', 'r') as f2:
         lines1 = f1.readlines()
         lines2 = f2.readlines()
         for i, line in enumerate(lines1):
