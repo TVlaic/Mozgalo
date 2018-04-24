@@ -52,8 +52,9 @@ for i, res in enumerate(merged_results):
         # print(i,res, votes[max_ind], len(conf_subset[conf_subset > confidence_threshold]) >= np.ceil(len(class_votes)/2))
         # print(i,"TOCNO ", class_name[max_ind], res)
         final_results.append(class_name[max_ind])
-        print(i,"NETOCNO ", "Other", res)
+        # print(i,"TOCNO ", "Other", res)
     else:
+        print(i,"NETOCNO ", "Other", res)
         cnt_different += 1
         if votes[max_ind] == len(class_votes):
             cnt_same += 1

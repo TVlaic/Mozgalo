@@ -56,7 +56,8 @@ my_model = ml_class(result_path, checkpoint_dir, model_parameters, preprocessor,
 my_model.init_network()
 
 
-my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-23__13_07_32/0.0294-0019.hdf5', by_name = True, skip_mismatch = True)
+# my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-23__17_57_30/0.0307-0014.hdf5', by_name = True, skip_mismatch = True)
+my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-23__23_05_08/0.0403-0014.hdf5', by_name = True, skip_mismatch = True)
 # raise Exception("definiraj model")
 root = '../inputs/test'
 root = os.path.abspath(root)
