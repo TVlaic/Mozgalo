@@ -6,6 +6,8 @@ cnt_match = 0
 cnt_match_other = 0
 number_of_others = 0
 cnt_prob = 0
+changed_other = 0
+changed_to_other = 0
 with open('./current_best.csv', 'r') as f1:
     with open('./Mozgalo.csv', 'r') as f2:
 # with open('/home/user/Mozgalo/outputs/results_for_ansambling/SubmissionWithConfidence_third.csv', 'r') as f1:
@@ -27,6 +29,10 @@ with open('./current_best.csv', 'r') as f1:
             else:
                 # if str1=='Other':
                 #     print(i, lines1[i].strip(), " -> "lines2[i].strip())
+                if lines1[i].strip() == "Other":
+                    changed_other +=1
+                if lines2[i].strip() == "Other":
+                    changed_to_other +=1
                 print(i, lines1[i].strip(), " -> ",lines2[i].strip())
                 #     cnt_prob+=1
                 # print("Vote %d" % i, lines1[i].strip(), lines2[i].strip())
@@ -36,4 +42,6 @@ with open('./current_best.csv', 'r') as f1:
 print("Matching = %d" % cnt_match)#, "Matching with high probability = %d" % cnt_prob)
 print("Matching Others = %d" % cnt_match_other, "Different with high probability = %d" % cnt_prob)#)
 print("Total matching = %d" %(cnt_match_other+cnt_match))
+print("Changed from other = %d" % changed_other)
+print("Changed to other = %d" % changed_to_other)
     

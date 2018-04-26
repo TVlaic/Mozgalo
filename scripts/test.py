@@ -57,11 +57,12 @@ my_model.init_network()
 
 
 # my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-23__17_57_30/0.0307-0014.hdf5', by_name = True, skip_mismatch = True)
-my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-23__23_05_08/0.0403-0014.hdf5', by_name = True, skip_mismatch = True)
+my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-24__12_01_45BatchNorm/0.0259-0023.hdf5', by_name = True, skip_mismatch = True)
 # raise Exception("definiraj model")
 root = '../inputs/test'
 root = os.path.abspath(root)
 warnings.simplefilter('ignore', DeprecationWarning) #zbog sklearna i numpy deprecationa u label encoderu
+warnings.filterwarnings(action='ignore')
 key = lambda x: int(x.split('/')[-1].split('.')[0])
 
 threshold = 0.95 # 0.95 resnet s center lossom dao 0.901

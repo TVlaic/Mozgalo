@@ -12,6 +12,9 @@ from keras import backend as K
 from keras.metrics import categorical_accuracy
 import keras.backend as K
 import keras.layers as KL
+from keras import regularizers
+from keras import initializers
+from keras.layers.merge import concatenate
 
 from sklearn.metrics import f1_score
 
@@ -23,6 +26,64 @@ from skimage.io import imread
 
 import tensorflow as tf
 import matplotlib.pyplot as plt
+
+def conv2d_bn(x, nb_filter, num_row, num_col,
+              padding='same', strides=(1, 1), use_bias=False):
+    """
+    Utility function to apply conv + BN. 
+    (Slightly modified from https://github.com/fchollet/keras/blob/master/keras/applications/inception_v3.py)
+    """
+    if K.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = -1
+    x = Conv2D(nb_filter, (num_row, num_col),
+                      strides=strides,
+                      padding=padding,
+                      use_bias=use_bias,
+                      kernel_regularizer=regularizers.l2(0.00004),
+                      kernel_initializer=initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='normal', seed=None))(x)
+    x = BatchNormalization(axis=channel_axis, momentum=0.9997, scale=False)(x)
+    x = Activation('relu')(x)
+    return x
+
+def block_reduction_a(input, num_output):
+    if K.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = -1
+
+    num_filters = num_output//4 #8
+    branch_0 = conv2d_bn(input, num_filters, 3, 3, strides=(2,2), padding='valid')
+
+    branch_1 = conv2d_bn(input, num_filters, 1, 1)
+    branch_1 = conv2d_bn(branch_1, num_filters, 3, 3)
+    branch_1 = conv2d_bn(branch_1, num_filters, 3, 3, strides=(2,2), padding='valid')
+
+    branch_2 = MaxPooling2D((3,3), strides=(2,2), padding='valid')(input)
+
+    x = concatenate([branch_0, branch_1, branch_2], axis=channel_axis)
+    return x
+
+def block_reduction_b(input, num_output):
+    if K.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = -1
+
+    num_filters = num_output//4 #8
+    branch_0 = conv2d_bn(input, num_filters, 1, 1)
+    branch_0 = conv2d_bn(branch_0, num_filters, 3, 3, strides=(2, 2), padding='valid')
+
+    branch_1 = conv2d_bn(input, num_filters, 1, 1)
+    branch_1 = conv2d_bn(branch_1, num_filters, 1, 7)
+    branch_1 = conv2d_bn(branch_1, num_filters, 7, 1)
+    branch_1 = conv2d_bn(branch_1, num_filters, 3, 3, strides=(2,2), padding='valid')
+
+    branch_2 = MaxPooling2D((3, 3), strides=(2, 2), padding='valid')(input)
+
+    x = concatenate([branch_0, branch_1, branch_2], axis=channel_axis)
+    return x
 
 
 def conv_block(feat_maps_out, prev):
@@ -116,8 +177,8 @@ def ResidualAttention(inputs, p = 1, t = 2, r = 1):
 def l2_embedding_loss(y_true, y_pred):
     return y_pred
 
-class ResidualAttentionNetSmallDifferentInterpolationCenterLoss(BaseNetwork):
-    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionNetSmallDifferentInterpolationCenterLoss", train = True):
+class ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLossNoBnorm(BaseNetwork):
+    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLossNoBnorm", train = True):
         BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name, train = train)
         self.p = int(config_dict['p'])
         self.r = int(config_dict['r'])
@@ -125,7 +186,6 @@ class ResidualAttentionNetSmallDifferentInterpolationCenterLoss(BaseNetwork):
         self.center_loss_strength = float(config_dict['CenterLossStrength']) if 'CenterLossStrength' in config_dict  else 0.5
 
     def get_network(self):
-
         inputs = Input(self.preprocessor.get_shape())
         outputs = Lambda(lambda x: (x /255. -0.5) * 2)(inputs)
 
@@ -134,11 +194,13 @@ class ResidualAttentionNetSmallDifferentInterpolationCenterLoss(BaseNetwork):
 
         outputs = Residual(8, 16, outputs)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
-        outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_2')(outputs)
-        outputs = Residual(16, 32, outputs)
+        # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_2')(outputs)
+        # outputs = Residual(16, 32, outputs)
+        outputs = block_reduction_a(outputs, num_output = 32)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
-        outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_3')(outputs) 
-        outputs = Residual(32, 64, outputs)
+        # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_3')(outputs) 
+        # outputs = Residual(32, 64, outputs)
+        outputs = block_reduction_b(outputs, num_output = 64)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_4')(outputs)
         outputs = Residual(64, 128, outputs)

@@ -24,7 +24,7 @@ def get_img_aug():
             scale={"x": (0.85, 1.0), "y": (0.85, 1.0)}, # scale images to 80-120% of their size, individually per axis
             translate_percent={"x": (-0.1, 0.1), "y": (0., 0.)}, # translate by -10 to +10 percent (per axis)
             rotate=(-15, 15), # rotate by -15 to +15 degrees
-            rotate=(-20, 20), # rotate by -15 to +15 degrees
+            # rotate=(-20, 20), # rotate by -15 to +15 degrees
             # shear=(-15, 15), # shear by -16 to +16 degrees
             cval=(0, 255), # if mode is constant, use a cval between 0 and 255
             mode="constant" # use any of scikit-image's warping modes (see 2nd image from the top for examples)

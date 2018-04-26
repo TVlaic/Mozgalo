@@ -43,7 +43,8 @@ def conv2d_bn(x, nb_filter, num_row, num_col,
                       use_bias=use_bias,
                       kernel_regularizer=regularizers.l2(0.00004),
                       kernel_initializer=initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='normal', seed=None))(x)
-    x = BatchNormalization(axis=channel_axis, momentum=0.9997, scale=False)(x)
+    #x = BatchNormalization(axis=channel_axis, momentum=0.9997, scale=False)(x)
+    x = BatchNormalization(axis=channel_axis)(x)#, momentum=0.9997, scale=False)(x)
     x = Activation('relu')(x)
     return x
 
@@ -175,6 +176,9 @@ def ResidualAttention(inputs, p = 1, t = 2, r = 1):
     return output
 
 
+def l2_embedding_loss(y_true, y_pred):
+    return y_pred
+    
 class ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLoss(BaseNetwork):
     def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLoss", train = True):
         BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name, train = train)
@@ -192,10 +196,12 @@ class ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLos
 
         outputs = Residual(8, 16, outputs)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
+        outputs = BatchNormalization()(outputs)
         # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_2')(outputs)
         # outputs = Residual(16, 32, outputs)
         outputs = block_reduction_a(outputs, num_output = 32)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
+        outputs = BatchNormalization()(outputs)
         # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_3')(outputs) 
         # outputs = Residual(32, 64, outputs)
         outputs = block_reduction_b(outputs, num_output = 64)
@@ -215,8 +221,9 @@ class ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLos
         centers = Embedding(self.number_of_classes,256)(input_target)
         l2_loss = Lambda(lambda x: K.sum(K.square(x[0]-x[1][:,0]),1,keepdims=True),name='l2_loss')([center_loss_layer,centers])
         model = Model(inputs=[inputs,input_target],outputs=[outputs,l2_loss])        
-        model.compile(loss=["categorical_crossentropy", lambda y_true,y_pred: y_pred],loss_weights=[1,lambda_c], optimizer=Adam(0.0001), metrics=[categorical_accuracy])
-        model.summary()
+        model.compile(loss=["categorical_crossentropy", l2_embedding_loss],loss_weights=[1,lambda_c], optimizer=Adam(0.0001), metrics=[categorical_accuracy])
+        if self.train:
+            model.summary()
 
         return model
 

@@ -46,15 +46,18 @@ for i, res in enumerate(merged_results):
     other_vote_indices = np.where(class_votes!=class_name[max_ind])
     conf_subset = confidence[max_vote_indices]
     conf_oposite_subset = confidence[other_vote_indices]
-    # if votes[max_ind] == len(class_votes) and len(conf_subset[conf_subset > confidence_threshold]) >= np.ceil(len(class_votes)/2): 
-    if votes[max_ind] >= np.ceil(len(class_votes)/2) and len(conf_subset[conf_subset > confidence_threshold]) >= np.ceil(len(class_votes)/2): 
-    # if votes[max_ind] >= np.ceil(len(class_votes)/2) and (len(conf_oposite_subset[conf_oposite_subset > confidence_threshold]) < len(conf_oposite_subset) or len(conf_oposite_subset)==0): 
-        # print(i,res, votes[max_ind], len(conf_subset[conf_subset > confidence_threshold]) >= np.ceil(len(class_votes)/2))
-        # print(i,"TOCNO ", class_name[max_ind], res)
+
+    # required_number_of_votes = np.floor(len(class_votes)/2) #Za isprobat sutra s folderom spremnim
+    required_number_of_votes = np.ceil(len(class_votes)/2)
+    # if votes[max_ind] >= required_number_of_votes and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes: 
+    if (votes[max_ind] >= required_number_of_votes and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes) or \
+        (votes[max_ind] >= len(class_votes)-2 and len(conf_subset[conf_subset > 0.9]) >= len(class_votes)-2 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
+        (votes[max_ind] >= len(class_votes)-1 and len(conf_subset[conf_subset > 0.85]) >= len(class_votes)-1 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco"):  #testing this part
+        
         final_results.append(class_name[max_ind])
-        # print(i,"TOCNO ", "Other", res)
+        print(i,"TOCNO ", class_name[max_ind], "%d/%d" % (votes[max_ind], len(class_votes)), class_name[max_ind], conf_subset)#, res)
     else:
-        print(i,"NETOCNO ", "Other", res)
+        print(i,"NETOCNO ", "Other", "%d/%d" % (votes[max_ind], len(class_votes)), class_name[max_ind], conf_subset)#, res)
         cnt_different += 1
         if votes[max_ind] == len(class_votes):
             cnt_same += 1

@@ -32,6 +32,7 @@ class BaseNetwork():
 
         self.tensorboard_dir_name = "tensorboard"
         self.tensorboard_path = os.path.join(self.full_checkpoint_dir_path,self.tensorboard_dir_name)
+        self.train = train
 
         if train:
             if not os.path.exists(self.full_path):
