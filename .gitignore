@@ -11,8 +11,8 @@ outputs/*
 *.csv
 *.npy
 *.npz
-*.hdf5
-*.h5
+./checkpoints/*.hdf5
+./checkpoints/*.h5
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
