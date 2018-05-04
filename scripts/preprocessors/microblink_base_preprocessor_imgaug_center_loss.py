@@ -21,8 +21,10 @@ def get_img_aug():
     [
         sometimes(iaa.Affine(
             #nisam siguran za ovaj scaling tho
-            scale={"x": (0.85, 1.0), "y": (0.85, 1.0)}, # scale images to 80-120% of their size, individually per axis
-            translate_percent={"x": (-0.1, 0.1), "y": (0., 0.)}, # translate by -10 to +10 percent (per axis)
+            # scale={"x": (0.85, 1.0), "y": (0.85, 1.0)}, # scale images to 80-120% of their size, individually per axis
+            # translate_percent={"x": (-0.1, 0.1), "y": (0., 0.)}, # translate by -10 to +10 percent (per axis)
+            scale={"x": (0.85, 1.15), "y": (0.85, 1.15)}, # scale images to 80-120% of their size, individually per axis
+            translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)}, # translate by -10 to +10 percent (per axis)
             rotate=(-15, 15), # rotate by -15 to +15 degrees
             # rotate=(-20, 20), # rotate by -15 to +15 degrees
             # shear=(-15, 15), # shear by -16 to +16 degrees
@@ -40,7 +42,8 @@ def get_img_aug():
                 ]),
                 iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.1*255), per_channel=0.5),
                 iaa.Dropout((0.01, 0.1), per_channel=0.5),
-                iaa.Add((-10, 10), per_channel=0.5), # change brightness of images (by -10 to 10 of original value)
+                # iaa.Add((-10, 10), per_channel=0.5), # change brightness of images (by -10 to 10 of original value)
+                iaa.Add((-20, 20), per_channel=0.5), # change brightness of images (by -10 to 10 of original value)
                 # either change the brightness of the whole image (sometimes
                 # per channel) or change the brightness of subareas
                 iaa.Multiply((0.5, 1.5), per_channel=0.5),

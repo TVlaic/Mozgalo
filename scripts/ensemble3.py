@@ -50,13 +50,21 @@ for i, res in enumerate(merged_results):
     # required_number_of_votes = np.floor(len(class_votes)/2) #Za isprobat sutra s folderom spremnim
     required_number_of_votes = np.ceil(len(class_votes)/2)
     # if votes[max_ind] >= required_number_of_votes and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes: 
-    if (votes[max_ind] >= required_number_of_votes and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes) or \
+    # if (votes[max_ind] >= required_number_of_votes and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes) or \
+    #     (votes[max_ind] >= required_number_of_votes-1 and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes-1 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
+    #     (votes[max_ind] >= len(class_votes)*0.7 and len(conf_subset[conf_subset > 0.9]) >= len(class_votes)*0.7 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
+    #     (votes[max_ind] >= len(class_votes)*0.8 and len(conf_subset[conf_subset > 0.85]) >= len(class_votes)*0.8 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco"):  #testing this part
+        # (votes[max_ind] >= len(class_votes)/2+2 and len(conf_subset[conf_subset > 0.9]) >= len(class_votes)/2+2 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
+        # (votes[max_ind] >= len(class_votes)/2+1 and len(conf_subset[conf_subset > 0.85]) >= len(class_votes)/2+1 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco"):  #testing this part
+
+        # and np.median(conf_oposite_subset) < 0.8) or
+    if votes[max_ind] >= required_number_of_votes and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes or \
+        (votes[max_ind] >= required_number_of_votes and np.median(conf_subset) >= 0.95 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
         (votes[max_ind] >= required_number_of_votes-1 and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes-1 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
         (votes[max_ind] >= len(class_votes)-3 and len(conf_subset[conf_subset > 0.9]) >= len(class_votes)-3 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
         (votes[max_ind] >= len(class_votes)-2 and len(conf_subset[conf_subset > 0.85]) >= len(class_votes)-2 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco"):  #testing this part
-        # (votes[max_ind] >= len(class_votes)/2+2 and len(conf_subset[conf_subset > 0.9]) >= len(class_votes)/2+2 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
-        # (votes[max_ind] >= len(class_votes)/2+1 and len(conf_subset[conf_subset > 0.85]) >= len(class_votes)/2+1 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco"):  #testing this part
         
+        # (votes[max_ind] >= len(class_votes)*0.8 and np.median(conf_subset) >= 0.85 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco"):  #testing this part
         final_results.append(class_name[max_ind])
         print(i,"TOCNO ", class_name[max_ind], "%d/%d" % (votes[max_ind], len(class_votes)), class_name[max_ind], conf_subset)#, res)
     else:
