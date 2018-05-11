@@ -24,12 +24,14 @@ from skimage.io import imread
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
+BATCH_SIZE = 0 #will be set when the network is constructed
+
 def stabilized_loss(y_true, y_pred):
     y_pred = K.clip(y_pred, K.epsilon(), 1.0-K.epsilon())
     loss =  tf.convert_to_tensor(0,dtype=tf.float32)
-    ALPHA = 0.2
+    ALPHA = 0.5
 
-    batch_size = y_pred._keras_shape[0]//2
+    batch_size = BATCH_SIZE
     
     original_out = y_pred[:batch_size]
     noised_out = y_pred[batch_size:]
@@ -37,23 +39,10 @@ def stabilized_loss(y_true, y_pred):
     y_original_out = K.clip(original_out, K.epsilon(), 1)
     y_noise_out = K.clip(noised_out, K.epsilon(), 1)
 
+    KL_D = K.mean(K.sum(y_original_out * K.log(y_original_out / y_noise_out), axis=-1), axis = 0)
+    loss = K.categorical_crossentropy(y_true[:batch_size], original_out) + KL_D * ALPHA
 
-    KL_D = K.mean(y_original_out * K.log(y_original_out / y_noise_out), axis=-1)
-    loss = K.categorical_crossentropy(y_true, y_pred) + KL_D * ALPHA
-
-    # for i in range(0,BATCH_SIZE,1):
-    #     try:
-    #         original_out = y_pred[i+0]
-    #         noised_out =  y_pred[i+1]
-    #         y_original_out = K.clip(original_out, K.epsilon(), 1)
-    #         y_noise_out = K.clip(noised_out, K.epsilon(), 1)
-    #         KL_D = K.sum(y_original_out * K.log(y_original_out / y_noise_out), axis=-1)
-    #         loss = (loss + K.categorical_crossentropy(y_true[i+0], y_pred[i+0]) + KL_D * ALPHA)            
-    #     except:
-    #         continue
-    # loss = loss/(BATCH_SIZE)
-
-    return loss
+    return K.categorical_crossentropy(y_true, y_pred)
 
 def conv_block(feat_maps_out, prev):
     prev = BatchNormalization()(prev) # Specifying the axis and mode allows for later merging
@@ -154,6 +143,9 @@ class ResidualAttentionNetSmallDifferentInterpolationCenterStabilityLoss(BaseNet
         self.t = int(config_dict['t'])
         self.center_loss_strength = float(config_dict['CenterLossStrength']) if 'CenterLossStrength' in config_dict  else 0.5
 
+        global BATCH_SIZE
+        BATCH_SIZE = self.batch_size
+
     def get_network(self):
 
         inputs = Input(self.preprocessor.get_shape())
@@ -185,7 +177,7 @@ class ResidualAttentionNetSmallDifferentInterpolationCenterStabilityLoss(BaseNet
         centers = Embedding(self.number_of_classes,256)(input_target)
         l2_loss = Lambda(lambda x: K.sum(K.square(x[0]-x[1][:,0]),1,keepdims=True),name='l2_loss')([center_loss_layer,centers])
         model = Model(inputs=[inputs,input_target],outputs=[outputs,l2_loss])        
-        model.compile(loss=["categorical_crossentropy", l2_embedding_loss],loss_weights=[1,lambda_c], optimizer=Adam(0.0001), metrics=[categorical_accuracy])
+        model.compile(loss=[stabilized_loss, l2_embedding_loss],loss_weights=[1,lambda_c], optimizer=Adam(0.0001), metrics=[categorical_accuracy])
         if self.train:
             model.summary()
 

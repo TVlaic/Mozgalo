@@ -16,7 +16,7 @@ from imgaug import augmenters as iaa
 import cv2
 
 def get_img_aug():
-    sometimes = lambda aug: iaa.Sometimes(0.5, aug)
+    sometimes = lambda aug: iaa.Sometimes(0.8, aug)
     seq = iaa.Sequential(
     [
         sometimes(iaa.Affine(
@@ -31,9 +31,16 @@ def get_img_aug():
             cval=(0, 255), # if mode is constant, use a cval between 0 and 255
             mode="constant" # use any of scikit-image's warping modes (see 2nd image from the top for examples)
         )),
-        # execute 0 to 5 of the following (less important) augmenters per image
-        # don't execute all of them, as that would often be way too strong
-        iaa.SomeOf((0, 2),
+    ],
+    random_order=True
+    )
+    return seq
+
+def get_img_aug_noise():
+    sometimes = lambda aug: iaa.Sometimes(0.5, aug)
+    seq = iaa.Sequential(
+    [
+        iaa.SomeOf((1, 2),
             [
                 iaa.OneOf([
                     iaa.GaussianBlur((0, 1.0)), # blur images with a sigma between 0 and 3.0
@@ -73,6 +80,7 @@ class GeneratorWrapper(Sequence):
         self.curiculum_epochs = curiculum_epochs
         self.datagen = self.create_datagen()
         self.seq = get_img_aug()
+        self.seq_noise = get_img_aug_noise()
 
     def __len__(self):
         return int(np.ceil(len(self.x) / float(self.batch_size)))
@@ -90,9 +98,10 @@ class GeneratorWrapper(Sequence):
             Y[i] = batch_y[i]
 
         if len(self.keyword_args) > 0:
-            X1 = np.vstack((X1,self.seq.augment_images(X1)))
+            X1 = self.seq.augment_images(X1)
+            X1 = np.vstack((X1, self.seq_noise.augment_images(X1)))
         else:
-            X1 = np.vstack((X1,X1))
+            X1 = np.vstack((X1,self.seq_noise.augment_images(X1)))
         Y = np.vstack((Y,Y))
 
         return [X1, np.argmax(Y, axis=1)], [Y, np.random.rand(self.batch_size*2,1)]
