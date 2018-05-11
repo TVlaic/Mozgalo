@@ -40,9 +40,9 @@ def stabilized_loss(y_true, y_pred):
     y_noise_out = K.clip(noised_out, K.epsilon(), 1)
 
     KL_D = K.mean(K.sum(y_original_out * K.log(y_original_out / y_noise_out), axis=-1), axis = 0)
-    loss = K.categorical_crossentropy(y_true[:batch_size], original_out) + KL_D * ALPHA
+    loss = K.mean(K.categorical_crossentropy(y_true[:batch_size], original_out),axis=0) + KL_D * ALPHA
 
-    return K.categorical_crossentropy(y_true, y_pred)
+    return loss
 
 def conv_block(feat_maps_out, prev):
     prev = BatchNormalization()(prev) # Specifying the axis and mode allows for later merging
