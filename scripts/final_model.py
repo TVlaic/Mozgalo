@@ -13,6 +13,8 @@ from tqdm import tqdm
 from PIL import ImageFile #jedan je buggy malo
 ImageFile.LOAD_TRUNCATED_IMAGES = True 
 from skimage.io import imread
+from sklearn import preprocessing
+import cv2
 
 import warnings
 
@@ -75,25 +77,33 @@ def ensemble_result(results_and_confidences):
 	else:
 		return 'Other'
 
-parser = argparse.ArgumentParser()
-parser.add_argument("PreprocessorName", help = "Preprocessor class name")
-args = parser.parse_args()
+def process_data(x):
+	x = cv2.imread(x, 0)
+	x = x[:x.shape[0]//3]
 
-config = configparser.ConfigParser()
-config.optionxform = str
-config.read("./config.cfg")
+	x = cv2.resize(x, (600, 1100))#, mode='constant', preserve_range=True)
+	x = x.reshape((1100, 600, 1))
+	return x
+
+# parser = argparse.ArgumentParser()
+# parser.add_argument("PreprocessorName", help = "Preprocessor class name")
+# args = parser.parse_args()
+
+# config = configparser.ConfigParser()
+# config.optionxform = str
+# config.read("./config.cfg")
 
 
-preprocessor_parameters = dict(config.items(args.PreprocessorName))
-data_parameters = dict(config.items('Data'))
+# preprocessor_parameters = dict(config.items(args.PreprocessorName))
+# data_parameters = dict(config.items('Data'))
 
-#load preprocessor
-module_name = preprocessor_parameters['PreprocessorModule']
-input_path = data_parameters['Inputs']
+# #load preprocessor
+# module_name = preprocessor_parameters['PreprocessorModule']
+# input_path = data_parameters['Inputs']
 
-module = import_module("preprocessors.%s" % (module_name))
-preprocessor_class = getattr(module, args.PreprocessorName)
-preprocessor = preprocessor_class(input_path, preprocessor_parameters) #needs to be changed for processor params or something
+# module = import_module("preprocessors.%s" % (module_name))
+# preprocessor_class = getattr(module, args.PreprocessorName)
+# preprocessor = preprocessor_class(input_path, preprocessor_parameters) #needs to be changed for processor params or something
 
 
 individual_models_folder = './IndividualModels/'
@@ -102,12 +112,12 @@ model_files = os.listdir(individual_models_folder)
 model_outputs = []
 model_csv_output_names = []
 
-inp = Input(preprocessor.get_shape())
-inp2 = Input((1,))
-for i, model_file in tqdm(enumerate(model_files), total = len(model_files)):
-	full_path = os.path.join(individual_models_folder, model_file)
-	model_csv_name = model_file.replace('.h5', '.csv')
-	model_csv_output_names.append(model_csv_name)
+# inp = Input(preprocessor.get_shape())
+# inp2 = Input((1,))
+# for i, model_file in tqdm(enumerate(model_files), total = len(model_files)):
+# 	full_path = os.path.join(individual_models_folder, model_file)
+# 	model_csv_name = model_file.replace('.h5', '.csv')
+# 	model_csv_output_names.append(model_csv_name)
 
 # 	model = load_model(full_path, custom_objects={"tf": tf, 'l2_embedding_loss' : l2_embedding_loss})
 # 	model.name = 'Model' + "_" +str(i)
@@ -116,6 +126,10 @@ for i, model_file in tqdm(enumerate(model_files), total = len(model_files)):
 # final_model = Model([inp,inp2], model_outputs)
 # final_model.save('Final_best_model.h5')
 final_model = load_model('Final_best_model.h5', custom_objects={"tf": tf, 'l2_embedding_loss' : l2_embedding_loss})
+
+labels = ['Costco', 'Meijer', 'HarrisTeeter', 'KingSoopers', 'ShopRite', 'JewelOsco', 'SamsClub', 'HyVee', 'BJs', 'Safeway', 'Target', 'HEB', 'Kroger', 'WholeFoodsMarket', 'StopShop', 'FredMeyer', 'Wegmans', 'Walmart', 'Frys', 'CVSPharmacy', 'Walgreens', 'Publix', 'WinCoFoods', 'Smiths', 'Albertsons']
+label_encoder = preprocessing.LabelEncoder()
+label_encoder.fit(labels)
 
 root = '../inputs/test'
 root = os.path.abspath(root)
@@ -130,7 +144,7 @@ conf_result = 0.95
 for file_name in tqdm(sorted(os.listdir(root), key = sorting_key)):
 	full_path = os.path.join(root, file_name)
 
-	image = preprocessor.process_data(full_path)
+	image = process_data(full_path)
 	image = np.expand_dims(image,axis=0)
 
 
@@ -139,7 +153,7 @@ for file_name in tqdm(sorted(os.listdir(root), key = sorting_key)):
 
 	max_indices = np.argmax(res, axis=1)
 	confidences = res[range(len(max_indices)),max_indices]
-	class_names = preprocessor.le.inverse_transform(max_indices)
+	class_names = label_encoder.inverse_transform(max_indices)
 	results_and_confidences = list(zip(class_names,confidences))
 
 	final_result = ensemble_result(results_and_confidences)
@@ -148,20 +162,20 @@ for file_name in tqdm(sorted(os.listdir(root), key = sorting_key)):
 	original_results.append(results_and_confidences)
 	
 
-sub = pd.DataFrame()
-sub['Results'] = results
-sub.to_csv('Mozgalo.csv', index=False, header=False)
-print(len(original_results), len(original_results[0]))
-print(list(zip(*original_results[0])))
-for i, csv_name in enumerate(model_csv_output_names):
-	names = []
-	confs = []
-	for result in original_results:
-		class_votes, confidence = list(zip(*result))
-		names.append(class_votes[i])
-		confs.append(confidence[i])
+# sub = pd.DataFrame()
+# sub['Results'] = results
+# sub.to_csv('Mozgalo.csv', index=False, header=False)
+# print(len(original_results), len(original_results[0]))
+# print(list(zip(*original_results[0])))
+# for i, csv_name in enumerate(model_csv_output_names):
+# 	names = []
+# 	confs = []
+# 	for result in original_results:
+# 		class_votes, confidence = list(zip(*result))
+# 		names.append(class_votes[i])
+# 		confs.append(confidence[i])
 
-	sub = pd.DataFrame()
-	sub['Results'] = names
-	sub['Confidence'] = confs
-	sub.to_csv('./IndividualResults/%s'%csv_name, index=False, header=False)
+# 	sub = pd.DataFrame()
+# 	sub['Results'] = names
+# 	sub['Confidence'] = confs
+# 	sub.to_csv('./IndividualResults/%s'%csv_name, index=False, header=False)

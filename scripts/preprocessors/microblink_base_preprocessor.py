@@ -79,7 +79,7 @@ class GeneratorWrapper(Sequence):
 class MicroblinkBasePreprocessor(BasePreprocessor):
     def __init__(self, input_directory, config_dict, name = "MicroblinkBasePreprocessor"):
         BasePreprocessor.__init__(self, input_directory, config_dict, name = name)
-        self.top_side_only = bool(config_dict['TopSideOnly'])
+        self.top_side_only = "true" == config_dict['TopSideOnly'].lower()
 
         self.TEST_PERCENTAGE = float(config_dict['TestPercentage'])
 
