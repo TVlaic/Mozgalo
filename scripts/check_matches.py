@@ -2,6 +2,24 @@ import os
 import pandas as pd
 import numpy as np
 
+num = 4
+first = ['/home/user/Mozgalo/outputs/0.94685Max/SubmissionWithConfidenceCenterLoss0.901_score_0.5.csv',
+'/home/user/Mozgalo/outputs/0.94685Max/SubmissionWithConfidence_center_loss1.0.csv',
+'/home/user/Mozgalo/outputs/0.94685Max/SubmissionWithConfidence_third.csv',
+'/home/user/Mozgalo/outputs/0.94685Max/SubmissionWithConfidenceFifth.csv',
+'/home/user/Mozgalo/outputs/0.94685Max/SubmissionWithConfidenceSixth0.0191-0025.hdf5.csv',
+'/home/user/Mozgalo/outputs/0.94685Max/SubmissionWithConfidenceInception.csv',
+'/home/user/Mozgalo/outputs/0.94685Max/SubmissionWithConfidenceInceptionLastBatchNorm.csv'
+]
+second = ['/home/user/Mozgalo/scripts/IndividualResults/FirstResidualAttentionModel.csv',
+'/home/user/Mozgalo/scripts/IndividualResults/SecondResidualAttentionModel.csv',
+'/home/user/Mozgalo/scripts/IndividualResults/ThirdResidualAttentionModel.csv',
+'/home/user/Mozgalo/scripts/IndividualResults/FifthResidualAttentionModel.csv',
+'/home/user/Mozgalo/scripts/SubmissionWithConfidence.csv',
+'/home/user/Mozgalo/scripts/IndividualResults/FirstInceptionModel.csv',
+'/home/user/Mozgalo/scripts/IndividualResults/FirstInceptionModelBNorm.csv'
+]
+
 cnt_match = 0
 cnt_match_other = 0
 number_of_others = 0
@@ -10,8 +28,8 @@ changed_other = 0
 changed_to_other = 0
 with open('./current_best.csv', 'r') as f1:
     with open('./Mozgalo.csv', 'r') as f2:
-# with open('/home/user/Mozgalo/outputs/results_for_ansambling/SubmissionWithConfidence_third.csv', 'r') as f1:
-#     with open('/home/user/Mozgalo/outputs/results_for_ansambling/SubmissionWithConfidenceFourth.csv', 'r') as f2:
+# with open(first[num], 'r') as f1:
+#     with open(second[num], 'r') as f2:
         lines1 = f1.readlines()
         lines2 = f2.readlines()
         for i, line in enumerate(lines1):

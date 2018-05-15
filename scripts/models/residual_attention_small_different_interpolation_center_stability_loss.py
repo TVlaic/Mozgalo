@@ -18,7 +18,7 @@ from sklearn.metrics import f1_score
 from .base_network import BaseNetwork
 from .custom_layers.SpatialTransformLayer import SpatialTransformLayer
 
-from skimage.transform import resize
+from skimage.transform import resizes
 from skimage.io import imread
 
 import tensorflow as tf
