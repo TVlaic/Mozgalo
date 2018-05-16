@@ -85,26 +85,6 @@ def process_data(x):
 	x = x.reshape((1100, 600, 1))
 	return x
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument("PreprocessorName", help = "Preprocessor class name")
-# args = parser.parse_args()
-
-# config = configparser.ConfigParser()
-# config.optionxform = str
-# config.read("./config.cfg")
-
-
-# preprocessor_parameters = dict(config.items(args.PreprocessorName))
-# data_parameters = dict(config.items('Data'))
-
-# #load preprocessor
-# module_name = preprocessor_parameters['PreprocessorModule']
-# input_path = data_parameters['Inputs']
-
-# module = import_module("preprocessors.%s" % (module_name))
-# preprocessor_class = getattr(module, args.PreprocessorName)
-# preprocessor = preprocessor_class(input_path, preprocessor_parameters) #needs to be changed for processor params or something
-
 
 individual_models_folder = './IndividualModels/'
 individual_models_output_folder = './IndividualModels/'
@@ -112,19 +92,6 @@ model_files = os.listdir(individual_models_folder)
 model_outputs = []
 model_csv_output_names = []
 
-# inp = Input(preprocessor.get_shape())
-# inp2 = Input((1,))
-# for i, model_file in tqdm(enumerate(model_files), total = len(model_files)):
-# 	full_path = os.path.join(individual_models_folder, model_file)
-# 	model_csv_name = model_file.replace('.h5', '.csv')
-# 	model_csv_output_names.append(model_csv_name)
-
-# 	model = load_model(full_path, custom_objects={"tf": tf, 'l2_embedding_loss' : l2_embedding_loss})
-# 	model.name = 'Model' + "_" +str(i)
-# 	model_outputs.append(model([inp, inp2])[0])
-
-# final_model = Model([inp,inp2], model_outputs)
-# final_model.save('Final_best_model.h5')
 final_model = load_model('Final_best_model.h5', custom_objects={"tf": tf, 'l2_embedding_loss' : l2_embedding_loss})
 
 labels = ['Costco', 'Meijer', 'HarrisTeeter', 'KingSoopers', 'ShopRite', 'JewelOsco', 'SamsClub', 'HyVee', 'BJs', 'Safeway', 'Target', 'HEB', 'Kroger', 'WholeFoodsMarket', 'StopShop', 'FredMeyer', 'Wegmans', 'Walmart', 'Frys', 'CVSPharmacy', 'Walgreens', 'Publix', 'WinCoFoods', 'Smiths', 'Albertsons']
@@ -162,20 +129,6 @@ for file_name in tqdm(sorted(os.listdir(root), key = sorting_key)):
 	original_results.append(results_and_confidences)
 	
 
-# sub = pd.DataFrame()
-# sub['Results'] = results
-# sub.to_csv('Mozgalo.csv', index=False, header=False)
-# print(len(original_results), len(original_results[0]))
-# print(list(zip(*original_results[0])))
-# for i, csv_name in enumerate(model_csv_output_names):
-# 	names = []
-# 	confs = []
-# 	for result in original_results:
-# 		class_votes, confidence = list(zip(*result))
-# 		names.append(class_votes[i])
-# 		confs.append(confidence[i])
-
-# 	sub = pd.DataFrame()
-# 	sub['Results'] = names
-# 	sub['Confidence'] = confs
-# 	sub.to_csv('./IndividualResults/%s'%csv_name, index=False, header=False)
+sub = pd.DataFrame()
+sub['Results'] = results
+sub.to_csv('Mozgalo.csv', index=False, header=False)
