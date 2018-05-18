@@ -86,12 +86,6 @@ def process_data(x):
 	return x
 
 
-individual_models_folder = './IndividualModels/'
-individual_models_output_folder = './IndividualModels/'
-model_files = os.listdir(individual_models_folder)
-model_outputs = []
-model_csv_output_names = []
-
 final_model = load_model('Final_best_model.h5', custom_objects={"tf": tf, 'l2_embedding_loss' : l2_embedding_loss})
 
 labels = ['Costco', 'Meijer', 'HarrisTeeter', 'KingSoopers', 'ShopRite', 'JewelOsco', 'SamsClub', 'HyVee', 'BJs', 'Safeway', 'Target', 'HEB', 'Kroger', 'WholeFoodsMarket', 'StopShop', 'FredMeyer', 'Wegmans', 'Walmart', 'Frys', 'CVSPharmacy', 'Walgreens', 'Publix', 'WinCoFoods', 'Smiths', 'Albertsons']
