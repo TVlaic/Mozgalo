@@ -28,30 +28,6 @@ from keras.layers import Input
 def l2_embedding_loss(y_true, y_pred):
     return y_pred
 
-def ensemble_result_prev(results_and_confidences):
-	confidence_threshold = 0.95 
-	class_votes, confidence = list(zip(*results_and_confidences))
-
-	confidence = np.array(confidence)
-	class_votes = np.array(class_votes)
-	class_name, votes = np.unique(class_votes, return_counts = True)
-	max_ind = np.argmax(votes)
-
-	max_vote_indices = np.where(class_votes==class_name[max_ind])
-	other_vote_indices = np.where(class_votes!=class_name[max_ind])
-	conf_subset = confidence[max_vote_indices]
-	conf_oposite_subset = confidence[other_vote_indices]
-
-	required_number_of_votes = np.ceil(len(class_votes)/2)
-	if (votes[max_ind] >= required_number_of_votes and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes) or \
-		(votes[max_ind] >= required_number_of_votes-1 and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes-1 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
-		(votes[max_ind] >= len(class_votes)-3 and len(conf_subset[conf_subset > 0.9]) >= len(class_votes)-3 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
-		(votes[max_ind] >= len(class_votes)-2 and len(conf_subset[conf_subset > 0.85]) >= len(class_votes)-2 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco"):  #testing this part
-
-		return class_name[max_ind]
-	else:
-		return 'Other'
-
 def ensemble_result(results_and_confidences):
 	confidence_threshold = 0.95 
 	class_votes, confidence = list(zip(*results_and_confidences))
@@ -98,10 +74,7 @@ warnings.simplefilter('ignore', DeprecationWarning) #zbog sklearna i numpy depre
 sorting_key = lambda x: int(x.split('/')[-1].split('.')[0])
 
 results = []
-confidence = []
 original_results = []
-cnt_others = 0
-conf_result = 0.95
 for file_name in tqdm(sorted(os.listdir(root), key = sorting_key)):
 	full_path = os.path.join(root, file_name)
 
