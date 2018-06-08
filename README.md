@@ -28,7 +28,7 @@ More information about the task can be found in this [pdf](Microblink-task-eng.p
 
 <a href="#Req">Requirements</a><br>
 <a href="#Data">Getting the dataset</a><br>
-<a href='#Results'>Example results</a><br>
+<a href='#Results'>Results</a><br>
 <a href="#Getting started">Getting started</a><br>
 <a href="#References">References</a><br>
 <a href="#Acknowledgements">Acknowledgements</a><br>
