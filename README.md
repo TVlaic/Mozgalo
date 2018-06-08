@@ -42,7 +42,7 @@ More information about the task can be found in this [pdf](Microblink-task-eng.p
 ```
 Linux
 Python 3 with installed virtualenv
-Nvidia GPU with installed Cuda 8 and CudaNN 9
+Nvidia GPU with installed Cuda 9
 ```
 
 ## Getting the dataset
