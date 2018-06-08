@@ -78,6 +78,34 @@ All networks listed bellow are trained on 70% split of training data created wit
 | Residual Attention Network with Center Loss  | ~ 0.91  |
 | Ensemble of Residual Attention Networks  | ~ 0.94  |
 
+Here are some examples of what the attention module really looks at:
+
+
+<table  border="0" width="100%" style="border:none">
+<tr width="100%" border="0" style="border:none">
+<td border="0" align="center" style="border:none">
+Fry's attention example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/att1.jpg" width="400">
+</td>
+<td border="0"  align="center" style="border:none">
+Wallgreens attention example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/att2.jpg" width="400">
+</td>
+</tr>
+  
+  
+<tr width="100%" border="0" style="border:none">
+<td border="0" align="center" style="border:none">
+Jewel-Osco attention example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/att3.jpg" width="400">
+</td>
+<td border="0"  align="center" style="border:none">
+WinCo Foods attention example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/att4.jpg" width="400">
+</td>
+</tr>
+  
+</table>
 
 ## Getting started
 <a id='Getting started'></a>
