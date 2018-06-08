@@ -69,7 +69,15 @@ Smiths receipt example
 ## Results
 <a id='Results'></a>
 
-results examples and description
+All networks listed bellow are trained on 70% split of training data created with a fixed seed of 42 which translates into 31500 samples.
+
+| Network  | F1 - test score |
+| ------------- | ------------- |
+| Base convolutional network | ~ 0.68 |
+| Residual Attention Network  | ~ 0.85  |
+| Residual Attention Network with Center Loss  | ~ 0.91  |
+| Ensemble of Residual Attention Networks  | ~ 0.94  |
+
 
 ## Getting started
 <a id='Getting started'></a>
