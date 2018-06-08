@@ -6,6 +6,8 @@ Through their solutions, students gather useful knowledge and information among 
 
 Data mining and predictive models are foundations of successful business in multiple industries and therefore this area can be considered the profession of the future.
 
+More information about the competition can be found [here](https://www.estudent.hr/category/natjecanja/mozgalo-en/).
+
 ## Project theme: Robust ML Challenge
 
 In the last couple of years, machine learning has in a way revolutionized the field of
@@ -22,7 +24,7 @@ solution on a labelled set of 45 000 images and 25 different classes and their
 robustness will be measured on the set of images which simulate the real conditions
 of industrial applications
 
-More information about the task can be found in this [pdf](Microblink-task-eng.pdf)
+More information about the task can be found in this [pdf](Microblink-task-eng.pdf).
 
 ## Table of contents
 
@@ -69,7 +71,7 @@ Smiths receipt example
 ## Results
 <a id='Results'></a>
 
-All networks listed bellow are trained on 70% split of training data created with a fixed seed of 42 which translates into 31500 samples.
+All networks listed bellow are trained on 70% split of training data created with a fixed seed of 42 which translates into 31500 samples. Residual Attention Networks are from the module with _small_ postfix and have a size of approximately 5 Mb.
 
 | Network  | F1 - test score |
 | ------------- | ------------- |
@@ -117,6 +119,21 @@ source init.sh
 ```
 
 The script will create the folder directory, create a virtual environment and install all the required libraries.
+
+After everything is set up change the _[Data]_ properties of inputs depending on where you placed your training data. When you configured the paths in config.cfg you can start training your first model by opening a terminal in the scripts folder and running the following command:
+
+
+```
+python train.py [ModelName] [PreprocessorName]
+```
+
+Where ModelName could be *ResidualAttentionNet* and PreprocessorName could be *MicroblinkBasePreprocessor* and the command would look like:
+
+
+```
+python train.py ResidualAttentionNet MicroblinkBasePreprocessor
+```
+
 
 ## References
 <a id='References'></a>
