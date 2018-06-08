@@ -22,6 +22,8 @@ solution on a labelled set of 45 000 images and 25 different classes and their
 robustness will be measured on the set of images which simulate the real conditions
 of industrial applications
 
+More information about the task can be found in this [pdf](Microblink-task-eng.pdf)
+
 ## Table of contents
 
 <a href="#Req">Requirements</a><br>
