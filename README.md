@@ -46,8 +46,24 @@ Nvidia GPU with installed Cuda 8 and CudaNN 9
 ## Getting the dataset
 <a id='Data'></a>
 
-data description and links description how to get it (maybe a bash script)
-dataset examples
+Since the dataset is the property of Microblink we are not allowed to publicly share it, but here are some examples of what it looks like.
+
+<table  border="0" width="100%" style="border:none">
+<tr width="100%" border="0" style="border:none">
+<td border="0" align="center" style="border:none">
+HEB receipt example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/1.jpg" width="400">
+</td>
+<td border="0"  align="center" style="border:none">
+Meijer receipt example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/2.jpg" width="400">
+</td>
+<td border="0"  align="center" style="border:none">
+Smiths receipt example
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/3.jpg" width="400">
+</td>
+</tr>
+</table>
 
 
 ## Results
