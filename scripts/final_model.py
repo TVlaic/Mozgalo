@@ -43,11 +43,11 @@ def ensemble_result(results_and_confidences):
 	conf_oposite_subset = confidence[other_vote_indices]
 
 	required_number_of_votes = np.ceil(len(class_votes)/2)
-	if (votes[max_ind] >= required_number_of_votes and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes) or \
-		(votes[max_ind] >= required_number_of_votes and np.median(conf_subset) >= 0.95 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
-		(votes[max_ind] >= required_number_of_votes-1 and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes-1 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
-		(votes[max_ind] >= len(class_votes)-3 and len(conf_subset[conf_subset > 0.9]) >= len(class_votes)-3 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
-		(votes[max_ind] >= len(class_votes)-2 and len(conf_subset[conf_subset > 0.85]) >= len(class_votes)-2 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco"):  #testing this part
+	if (votes[max_ind] >= required_number_of_votes and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes):# or \
+		# (votes[max_ind] >= required_number_of_votes and np.median(conf_subset) >= 0.95 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
+		# (votes[max_ind] >= required_number_of_votes-1 and len(conf_subset[conf_subset > confidence_threshold]) >= required_number_of_votes-1 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
+		# (votes[max_ind] >= len(class_votes)-3 and len(conf_subset[conf_subset > 0.9]) >= len(class_votes)-3 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco") or \
+		# (votes[max_ind] >= len(class_votes)-2 and len(conf_subset[conf_subset > 0.85]) >= len(class_votes)-2 and class_name[max_ind] != "Smiths" and class_name[max_ind] != "Costco"):  #testing this part
 
 		return class_name[max_ind]
 	else:
@@ -68,7 +68,7 @@ labels = ['Costco', 'Meijer', 'HarrisTeeter', 'KingSoopers', 'ShopRite', 'JewelO
 label_encoder = preprocessing.LabelEncoder()
 label_encoder.fit(labels)
 
-root = '../inputs/test'
+root = '../inputs/robust_ml_challenge_final_testset'
 root = os.path.abspath(root)
 warnings.simplefilter('ignore', DeprecationWarning) #zbog sklearna i numpy deprecationa u label encoderu
 sorting_key = lambda x: int(x.split('/')[-1].split('.')[0])
