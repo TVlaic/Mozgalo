@@ -121,6 +121,9 @@ The script will create the folder directory, create a virtual environment and in
 ## References
 <a id='References'></a>
 
+_[1]_ Fei Wang, Mengqing Jiang, Chen Qian, Shuo Yang, Cheng Li, Honggang Zhang, Xi- aogang Wang, and Xiaoou Tang. Residual attention network for image classification. _CoRR, abs/1704.06904_, 2017. URL http://arxiv.org/abs/1704.06904.
+
+_[2]_ Ce Qi and Fei Su. Contrastive-center loss for deep neural networks. _CoRR, abs/1707.07391_, 2017. URL http://arxiv.org/abs/1707.07391.
 
 ## Acknowledgements
 <a id='Acknowledgements'></a>
