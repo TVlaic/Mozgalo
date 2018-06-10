@@ -100,9 +100,9 @@ class MicroblinkBaseNet(BaseNetwork):
         # W = np.zeros((50, 6), dtype='float32')
         # weights = [W, b.flatten()]
 
-        # s = Lambda(lambda x: x / 255.) (inputs)
+        s = Lambda(lambda x: x / 255.) (inputs)
 
-        locnet = Convolution2D(16, (11, 11), activation='relu', name = 'localization_conv_1')(inputs)
+        locnet = Convolution2D(16, (11, 11), activation='relu', name = 'localization_conv_1')(s)
         locnet = Convolution2D(16, (1, 11), activation='relu', name = 'localization_conv_2')(inputs)
         locnet = MaxPooling2D(pool_size=(2,2), name = 'localization_maxpool_1')(locnet)
 
@@ -143,7 +143,7 @@ class MicroblinkBaseNet(BaseNetwork):
                                      output_size=self.STN_output_size, name='spatial_layer_1')(inputs)
 
 
-        # s = Lambda(lambda x: x / 255.) (outputs)
+        outputs = Lambda(lambda x: x / 255.) (outputs)
 
         outputs = Convolution2D(32, (3, 3), padding='same', activation = 'relu', name = 'classification_conv_1')(outputs)
         outputs = MaxPooling2D(pool_size=(2,2), name = 'classification_maxpool_1')(outputs)
@@ -165,7 +165,7 @@ class MicroblinkBaseNet(BaseNetwork):
 
         outputs = Flatten()(outputs)
         outputs = Dense(256, activation = 'relu', name = 'classification_dense_1')(outputs)
-        outputs = Dense(self.number_of_classes, activation='softmax', name = 'classification_dense_probs')(outputs)
+        outputs = Dense(self.preprocessor.get_number_of_classes(), activation='softmax', name = 'classification_dense_probs')(outputs)
 
         model = Model(inputs=[inputs], outputs=[outputs])
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=[categorical_accuracy])

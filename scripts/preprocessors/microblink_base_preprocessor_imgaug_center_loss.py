@@ -148,23 +148,6 @@ class MicroblinkBasePreprocessorImgaugCenterLoss(BasePreprocessor):
         print('Augmentation parameters')
         for key in self.keyword_args.keys():
             print(key, ' - ', self.keyword_args[key])
-            
-        #augmentations
-        # self.width_shift_range = parse_range(config_dict['WidthShiftRange']) if 'WidthShiftRange' in config_dict else (0.,0.)
-        # self.height_shift_range = parse_range(config_dict['HeightShiftRange']) if 'HeightShiftRange' in config_dict  else (0.,0.)
-        # self.shear_range = parse_range(config_dict['ShearRange']) if 'ShearRange' in config_dict  else (0.,0.)
-        # self.scale_range = parse_range(config_dict['ScaleRange']) if 'ScaleRange' in config_dict  else (0.,0.)
-        # self.rotation_range = parse_range(config_dict['RotationRange']) if 'RotationRange' in config_dict  else (0.,0.)
-        # self.gaussian_blur_range = parse_range(config_dict['GaussianBlur']) if 'GaussianBlur' in config_dict  else (0.,0.)
-        # self.median_blur_range = parse_range(config_dict['MedianBlur']) if 'MedianBlur' in config_dict  else (0.,0.)
-        # self.average_blur_range = parse_range(config_dict['AverageBlur']) if 'AverageBlur' in config_dict  else (0.,0.)
-        # self.additive_gaussian_noise_range = parse_range(config_dict['AdditiveGaussianNoise']) if 'AdditiveGaussianNoise' in config_dict  else (0.,0.)
-        # self.dropout_range = parse_range(config_dict['Dropout']) if 'Dropout' in config_dict  else (0.,0.)
-        # self.add_range = parse_range(config_dict['Add']) if 'Add' in config_dict  else (0.,0.)
-        # self.multiply_range = parse_range(config_dict['Multiply']) if 'Multiply' in config_dict  else (0.,0.)
-        # self.elastic_transform_range = parse_range(config_dict['ElasticTransformation']) if 'ElasticTransformation' in config_dict  else (0.,0.)
-        # self.perspective_transform_range = parse_range(config_dict['PerspectiveTransform']) if 'PerspectiveTransform' in config_dict  else (0.,0.)
-        # self.elastic_transform_sigma = float(config_dict['ElasticTransformationSigma']) if 'ElasticTransformationSigma' in config_dict else 0.2
 
         self.le = preprocessing.LabelEncoder()
         self.X_train = []
@@ -186,6 +169,9 @@ class MicroblinkBasePreprocessorImgaugCenterLoss(BasePreprocessor):
 
         self.X_validation = np.array(self.X_validation)
         self.y_validation = np_utils.to_categorical(self.y_validation, len(set(self.le.classes_)))
+
+    def get_number_of_classes(self):
+        return len(os.listdir(self.TRAIN_PATH))
 
     def get_train_steps(self):
         return None #because i got the sequential wrapper for generating data  self.X_train.shape[0]/self.TRAIN_BATCH_SIZE

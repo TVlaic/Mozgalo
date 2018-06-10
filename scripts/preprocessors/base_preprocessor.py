@@ -6,7 +6,7 @@ class BasePreprocessor():
         self.config_dict = config_dict
         self.name = name
         self.input_directory = input_directory
-        self.full_path = os.path.expanduser(self.input_directory)
+        self.full_path = os.path.abspath(self.input_directory)
         print("Preprocessor input path %s" % self.full_path)
 
         print(config_dict)
@@ -22,6 +22,9 @@ class BasePreprocessor():
 
     def get_shape(self):
         return (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS)
+
+    def get_number_of_classes(self):
+        pass
 
     def process_data(self, x):
         pass

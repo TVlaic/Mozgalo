@@ -14,29 +14,31 @@ class BaseNetwork():
 
         self.num_of_epochs = int(self.config_dict['Epochs'])
         self.batch_size = int(self.config_dict['BatchSize'])
-        self.number_of_classes = int(self.config_dict['NumberOfClasses'])
+
+        self.curr_datetime_str = datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
 
         self.preprocessor = preprocessor
 
         self.output_directory = output_directory
-        self.full_path = os.path.join(os.path.expanduser(self.output_directory),self.name)
+        self.output_directory = os.path.join(os.path.abspath(self.output_directory),self.name)
+        self.output_directory = os.path.join(os.path.abspath(self.output_directory),self.preprocessor.name)
+        self.output_directory = os.path.join(os.path.abspath(self.output_directory), self.curr_datetime_str)
+        self.output_directory = os.path.abspath(self.output_directory)
 
         self.checkpoint_directory = checkpoint_directory
-        self.root_checkpoint_path = os.path.join(os.path.expanduser(self.checkpoint_directory),self.name)
-
-        self.curr_datetime_str = datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
+        self.root_checkpoint_path = os.path.join(os.path.abspath(self.checkpoint_directory),self.name)
 
         self.full_checkpoint_dir_path = os.path.join((self.root_checkpoint_path),self.preprocessor.name)
         self.full_checkpoint_dir_path = os.path.join(self.full_checkpoint_dir_path, self.curr_datetime_str)
-        self.full_checkpoint_dir_path = os.path.expanduser(self.full_checkpoint_dir_path)
+        self.full_checkpoint_dir_path = os.path.abspath(self.full_checkpoint_dir_path)
 
         self.tensorboard_dir_name = "tensorboard"
         self.tensorboard_path = os.path.join(self.full_checkpoint_dir_path,self.tensorboard_dir_name)
         self.train = train
 
         if train:
-            if not os.path.exists(self.full_path):
-                os.makedirs(self.full_path)
+            if not os.path.exists(self.output_directory):
+                os.makedirs(self.output_directory)
 
             if not os.path.exists(self.root_checkpoint_path):
                 os.makedirs(self.root_checkpoint_path)
@@ -49,7 +51,7 @@ class BaseNetwork():
 
 
             print("Imported and created %s" % self.name)
-            print("Network output path %s" % self.full_path)
+            print("Network output path %s" % self.output_directory)
             print("Created root folder for network checkpoints %s" % self.root_checkpoint_path)
             print("Created network checkpoint path %s" % self.full_checkpoint_dir_path)
             print("Created tensorboard output dirs %s" %self.tensorboard_path)

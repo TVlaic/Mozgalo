@@ -59,11 +59,11 @@ class ResidualAttentionNetSeparableConvolutionsSmallCenterLoss(BaseNetwork):
         # outputs = GlobalMaxPooling2D()(outputs)
         outputs = Dense(256, name = 'classification_dense_1', activation='relu')(outputs)
         center_loss_layer = outputs
-        outputs = Dense(self.number_of_classes, activation='softmax', name = 'class_prob')(center_loss_layer)
+        outputs = Dense(self.preprocessor.get_number_of_classes(), activation='softmax', name = 'class_prob')(center_loss_layer)
 
         lambda_c = self.center_loss_strength
         input_target = Input(shape=(1,)) # single value ground truth labels as inputs
-        centers = Embedding(self.number_of_classes,256)(input_target)
+        centers = Embedding(self.preprocessor.get_number_of_classes(), 256)(input_target)
         l2_loss = Lambda(lambda x: K.sum(K.square(x[0]-x[1][:,0]),1,keepdims=True),name='l2_loss')([center_loss_layer,centers])
         model = Model(inputs=[inputs,input_target],outputs=[outputs,l2_loss])        
         model.compile(loss=["categorical_crossentropy", l2_embedding_loss],loss_weights=[1,lambda_c], optimizer=Adam(0.0001), metrics=[categorical_accuracy])

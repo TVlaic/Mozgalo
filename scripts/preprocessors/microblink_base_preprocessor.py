@@ -97,6 +97,10 @@ class MicroblinkBasePreprocessor(BasePreprocessor):
         self.y_train = np_utils.to_categorical(self.y_train, len(set(self.le.classes_)))
         self.y_validation = np_utils.to_categorical(self.y_validation, len(set(self.le.classes_)))
 
+
+    def get_number_of_classes(self):
+        return len(os.listdir(self.TRAIN_PATH))
+
     def get_train_steps(self):
         return None #because i got the sequential wrapper for generating data  self.X_train.shape[0]/self.TRAIN_BATCH_SIZE
 

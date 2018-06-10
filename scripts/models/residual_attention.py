@@ -50,7 +50,7 @@ class ResidualAttentionNet(BaseNetwork):
 
         outputs = GlobalAveragePooling2D()(outputs)
         outputs = Dense(256, activation = 'relu', name = 'classification_dense_1')(outputs)
-        outputs = Dense(self.number_of_classes, activation='softmax', name = 'classification_dense_probs')(outputs)
+        outputs = Dense(self.preprocessor.get_number_of_classes(), activation='softmax', name = 'classification_dense_probs')(outputs)
 
         model = Model(inputs=[inputs], outputs=[outputs])
         model.compile(loss='categorical_crossentropy', optimizer=Adam(0.0001), metrics=[categorical_accuracy])
