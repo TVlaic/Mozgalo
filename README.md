@@ -6,6 +6,8 @@ Through their solutions, students gather useful knowledge and information among 
 
 Data mining and predictive models are foundations of successful business in multiple industries and therefore this area can be considered the profession of the future.
 
+More information about the competition can be found [here](https://www.estudent.hr/category/natjecanja/mozgalo-en/).
+
 ## Project theme: Robust ML Challenge
 
 In the last couple of years, machine learning has in a way revolutionized the field of
@@ -22,13 +24,13 @@ solution on a labelled set of 45 000 images and 25 different classes and their
 robustness will be measured on the set of images which simulate the real conditions
 of industrial applications
 
-More information about the task can be found in this [pdf](Microblink-task-eng.pdf)
+More information about the task can be found in this [pdf](Microblink-task-eng.pdf).
 
 ## Table of contents
 
 <a href="#Req">Requirements</a><br>
 <a href="#Data">Getting the dataset</a><br>
-<a href='#Results'>Example results</a><br>
+<a href='#Results'>Results</a><br>
 <a href="#Getting started">Getting started</a><br>
 <a href="#References">References</a><br>
 <a href="#Acknowledgements">Acknowledgements</a><br>
@@ -40,7 +42,7 @@ More information about the task can be found in this [pdf](Microblink-task-eng.p
 ```
 Linux
 Python 3 with installed virtualenv
-Nvidia GPU with installed Cuda 8 and CudaNN 9
+Nvidia GPU with installed Cuda 9
 ```
 
 ## Getting the dataset
@@ -69,7 +71,7 @@ Smiths receipt example
 ## Results
 <a id='Results'></a>
 
-All networks listed bellow are trained on 70% split of training data created with a fixed seed of 42 which translates into 31500 samples.
+All networks listed bellow are trained on 70% split of training data created with a fixed seed of 42 which translates into 31500 samples. Residual Attention Networks are from the module with _small_ postfix and have a size of approximately 5 Mb.
 
 | Network  | F1 - test score |
 | ------------- | ------------- |
@@ -78,6 +80,34 @@ All networks listed bellow are trained on 70% split of training data created wit
 | Residual Attention Network with Center Loss  | ~ 0.91  |
 | Ensemble of Residual Attention Networks  | ~ 0.94  |
 
+Here are some examples of what the attention module really looks at:
+
+
+<table  border="0" width="100%" style="border:none">
+<tr width="100%" border="0" style="border:none">
+<td border="0" align="center" style="border:none">
+Fry's attention example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/att1.jpg" width="400">
+</td>
+<td border="0"  align="center" style="border:none">
+Wallgreens attention example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/att2.jpg" width="400">
+</td>
+</tr>
+  
+  
+<tr width="100%" border="0" style="border:none">
+<td border="0" align="center" style="border:none">
+Jewel-Osco attention example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/att3.jpg" width="400">
+</td>
+<td border="0"  align="center" style="border:none">
+WinCo Foods attention example:
+<img src="https://github.com/Mungosin/Mozgalo/blob/master/ReadmeImages/att4.jpg" width="400">
+</td>
+</tr>
+  
+</table>
 
 ## Getting started
 <a id='Getting started'></a>
@@ -90,9 +120,27 @@ source init.sh
 
 The script will create the folder directory, create a virtual environment and install all the required libraries.
 
+After everything is set up change the _[Data]_ properties of inputs depending on where you placed your training data. When you configured the paths in config.cfg you can start training your first model by opening a terminal in the scripts folder and running the following command:
+
+
+```
+python train.py [ModelName] [PreprocessorName]
+```
+
+Where ModelName could be *ResidualAttentionNet* and PreprocessorName could be *MicroblinkBasePreprocessor* and the command would look like:
+
+
+```
+python train.py ResidualAttentionNet MicroblinkBasePreprocessor
+```
+
+
 ## References
 <a id='References'></a>
 
+_[1]_ Fei Wang, Mengqing Jiang, Chen Qian, Shuo Yang, Cheng Li, Honggang Zhang, Xi- aogang Wang, and Xiaoou Tang. Residual attention network for image classification. _CoRR, abs/1704.06904_, 2017. URL http://arxiv.org/abs/1704.06904.
+
+_[2]_ Ce Qi and Fei Su. Contrastive-center loss for deep neural networks. _CoRR, abs/1707.07391_, 2017. URL http://arxiv.org/abs/1707.07391.
 
 ## Acknowledgements
 <a id='Acknowledgements'></a>
