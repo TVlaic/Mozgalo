@@ -160,6 +160,17 @@ Where ModelName could be *ResidualAttentionNet* and PreprocessorName could be *M
 python train.py ResidualAttentionNet MicroblinkBasePreprocessor
 ```
 
+After the training process has finished you can test the last checkpoint by running the test.py script as follows:
+
+```
+python test.py ResidualAttentionNet MicroblinkBasePreprocessor
+```
+
+or if you want to run a specific checkpoint you can run it like this:
+
+```
+python test.py ResidualAttentionNet MicroblinkBasePreprocessor -p [PathToCheckpointFile]
+```
 
 ## References
 <a id='References'></a>
