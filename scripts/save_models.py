@@ -16,6 +16,9 @@ from skimage.io import imread
 
 import warnings
 
+#### Script creates model file from weights which can be loaded using keras load_model function so the graph code doesn't have to be executed
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("ModelName", help= "Model class name")
 parser.add_argument("PreprocessorName", help = "Preprocessor class name")

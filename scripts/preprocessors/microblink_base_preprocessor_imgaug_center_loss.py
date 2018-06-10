@@ -15,64 +15,61 @@ import imgaug as ia
 from imgaug import augmenters as iaa
 import cv2
 
-def get_img_aug():
+
+def get_img_aug(keyword_args):
     sometimes = lambda aug: iaa.Sometimes(0.5, aug)
-    seq = iaa.Sequential(
-    [
-        sometimes(iaa.Affine(
-            #nisam siguran za ovaj scaling tho
-            # scale={"x": (0.85, 1.0), "y": (0.85, 1.0)}, # scale images to 80-120% of their size, individually per axis
-            # translate_percent={"x": (-0.1, 0.1), "y": (0., 0.)}, # translate by -10 to +10 percent (per axis)
-            scale={"x": (0.85, 1.15), "y": (0.85, 1.15)}, # scale images to 80-120% of their size, individually per axis
-            translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)}, # translate by -10 to +10 percent (per axis)
-            rotate=(-15, 15), # rotate by -15 to +15 degrees
-            # rotate=(-20, 20), # rotate by -15 to +15 degrees
-            # shear=(-15, 15), # shear by -16 to +16 degrees
-            cval=(0, 255), # if mode is constant, use a cval between 0 and 255
-            mode="constant" # use any of scikit-image's warping modes (see 2nd image from the top for examples)
-        )),
-        # execute 0 to 5 of the following (less important) augmenters per image
-        # don't execute all of them, as that would often be way too strong
-        iaa.SomeOf((0, 2),
-            [
-                iaa.OneOf([
-                    iaa.GaussianBlur((0, 1.0)), # blur images with a sigma between 0 and 3.0
-                    iaa.AverageBlur(k=(2, 5)), # blur image using local means with kernel sizes between 2 and 5
-                    iaa.MedianBlur(k=(3, 5)), # blur image using local medians with kernel sizes between 2 and 5
-                ]),
-                iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.1*255), per_channel=0.5),
-                iaa.Dropout((0.01, 0.1), per_channel=0.5),
-                # iaa.Add((-10, 10), per_channel=0.5), # change brightness of images (by -10 to 10 of original value)
-                iaa.Add((-20, 20), per_channel=0.5), # change brightness of images (by -10 to 10 of original value)
-                # either change the brightness of the whole image (sometimes
-                # per channel) or change the brightness of subareas
-                iaa.Multiply((0.5, 1.5), per_channel=0.5),
-                iaa.ElasticTransformation(alpha=(0.5, 2.), sigma=0.2),
-                iaa.PerspectiveTransform(scale=(0.01, 0.075))
-                #only works for colored images
-                #iaa.AddToHueAndSaturation((-20, 20)), # change hue and saturation
-                #iaa.ContrastNormalization((0.5, 2.0), per_channel=0.5), # improve or worsen the contrast
-                #iaa.Grayscale(alpha=(0.0, 1.0)),
-            ],
-            random_order=True
+    if len(keyword_args.keys()) != 0:
+        seq = iaa.Sequential(
+        [
+            sometimes(iaa.Affine(
+                scale = {"x": keyword_args['scale_x'], "y": keyword_args['scale_y']}, # scale images to 80-120% of their size, individually per axis
+                translate_percent = {"x": keyword_args['translate_x'], "y": keyword_args['translate_y']}, # translate by -10 to +10 percent (per axis)
+                rotate = keyword_args['rotation_range'], # rotate by -15 to +15 degrees
+                shear = keyword_args['shear_range'],
+                cval = (0, 255), # if mode is constant, use a cval between 0 and 255
+                mode = "constant" # use any of scikit-image's warping modes (see 2nd image from the top for examples)
+            )),
+            # execute 0 to 5 of the following (less important) augmenters per image
+            # don't execute all of them, as that would often be way too strong
+            iaa.SomeOf((0, 2),
+                [
+                    iaa.OneOf([
+                        iaa.GaussianBlur(keyword_args['gaussian_blur_range']), # blur images with a sigma between 0 and 3.0
+                        iaa.AverageBlur(k = keyword_args['average_blur_kernel']), # blur image using local means with kernel sizes between 2 and 5
+                        iaa.MedianBlur(k = keyword_args['median_blur_kernel']), # blur image using local medians with kernel sizes between 2 and 5
+                    ]),
+                    iaa.AdditiveGaussianNoise(loc = 0, scale = keyword_args['additive_gaussian_noise_scale'], per_channel = 0.5),
+                    iaa.Dropout(keyword_args['dropout_range'], per_channel = 0.5),
+                    iaa.Add(keyword_args['add_range'], per_channel = 0.5), # change brightness of images (by -10 to 10 of original value)
+                    # either change the brightness of the whole image (sometimes
+                    # per channel) or change the brightness of subareas
+                    iaa.Multiply(keyword_args['multiply_range'], per_channel = 0.5),
+                    iaa.ElasticTransformation(alpha = keyword_args['elastic_transform_alpha_range'], sigma = keyword_args['elastic_transform_sigma']),
+                    iaa.PerspectiveTransform(scale = keyword_args['perspective_transform_scale'])
+
+                    #only works for colored images
+                    #iaa.AddToHueAndSaturation((-20, 20)), # change hue and saturation
+                    #iaa.ContrastNormalization((0.5, 2.0), per_channel=0.5), # improve or worsen the contrast
+                    #iaa.Grayscale(alpha=(0.0, 1.0)),
+                ],
+                random_order=True
+            )
+        ],
+        random_order=True
         )
-    ],
-    random_order=True
-    )
+    else:
+        seq = iaa.Sequential(iaa.Noop())
     return seq
 
 class GeneratorWrapper(Sequence):
-    def __init__(self, x, y, curiculum_epochs, batch_size, image_shape, keyword_args, preprocess_data_func):
+    def __init__(self, x, y, batch_size, image_shape, keyword_args, preprocess_data_func):
         self.x, self.y = x, y
-        # self.datagen = datagen
         self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS = image_shape
         self.batch_size = batch_size
         self.keyword_args = keyword_args
         self.epoch_num = 0
         self.preprocess_data = preprocess_data_func
-        self.curiculum_epochs = curiculum_epochs
-        self.datagen = self.create_datagen()
-        self.seq = get_img_aug()
+        self.seq = get_img_aug(keyword_args)
 
     def __len__(self):
         return int(np.ceil(len(self.x) / float(self.batch_size)))
@@ -84,47 +81,60 @@ class GeneratorWrapper(Sequence):
         X1 = np.zeros((self.batch_size, self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS)).astype(np.uint8)
         Y = np.zeros((self.batch_size, batch_y.shape[1]))
 
-        cut_off_fake_examples = 0.3
-        flip = False
-        # if len(self.keyword_args) > 0:
-        #     flip = True
-        # flip=True
         for i, ind in enumerate(batch_x):
             image = self.preprocess_data(batch_x[i])
             X1[i] = image
-
-            if flip and np.random.rand() < 1./20: # small residual net treniran ovako 1./15:
-                X1[i] = np.fliplr(X1[i])
-                Y[i] = np.zeros((1, batch_y.shape[1])) + 1./batch_y.shape[1]
-                continue
             Y[i] = batch_y[i]
 
         if len(self.keyword_args) > 0:
             X1 = self.seq.augment_images(X1)
         return [X1, np.argmax(Y, axis=1)], [Y, np.random.rand(self.batch_size,1)]
 
-    def on_epoch_end(self):
-        """Method called at the end of every epoch.
-        """
-        self.epoch_num +=1
-        self.datagen = self.create_datagen()
 
-    def create_datagen(self):
-        if len(self.keyword_args.keys()) == 0:
-            return image.ImageDataGenerator()
-        else:
-            if self.curiculum_epochs == 0:
-                weight = 1
-            else:
-                weight = min(1, self.epoch_num/self.curiculum_epochs)
-            new_datagen = {}
-            for key in self.keyword_args:
-                if isinstance(self.keyword_args[key], numbers.Number):
-                    new_datagen[key] = self.keyword_args[key] * weight
-                else:
-                    new_datagen[key] = self.keyword_args[key]
 
-            return image.ImageDataGenerator(**new_datagen)
+def get_keyword_args(config_dict):
+
+    scale_range_width = parse_range(config_dict['ScaleRangeX']) if 'ScaleRangeX' in config_dict else (1.,1.)
+    scale_range_height = parse_range(config_dict['ScaleRangeY']) if 'ScaleRangeY' in config_dict else (1.,1.)
+    width_shift_range = parse_range(config_dict['WidthShiftRange']) if 'WidthShiftRange' in config_dict else (0.,0.)
+    height_shift_range = parse_range(config_dict['HeightShiftRange']) if 'HeightShiftRange' in config_dict  else (0.,0.)
+    shear_range = parse_range(config_dict['ShearRange']) if 'ShearRange' in config_dict  else (0.,0.)
+    rotation_range = parse_range(config_dict['RotationRange']) if 'RotationRange' in config_dict  else (0.,0.)
+    gaussian_blur_range = parse_range(config_dict['GaussianBlurSigma']) if 'GaussianBlurSigma' in config_dict  else (0.,0.)
+    median_blur_kernel = parse_range(config_dict['MedianBlurKernel']) if 'MedianBlurKernel' in config_dict  else (0.,0.)
+    average_blur_kernel = parse_range(config_dict['AverageBlurKernel']) if 'AverageBlurKernel' in config_dict  else (0.,0.)
+    additive_gaussian_noise_scale = parse_range(config_dict['AdditiveGaussianNoiseScale']) if 'AdditiveGaussianNoiseScale' in config_dict  else (0.,0.)
+    dropout_range = parse_range(config_dict['Dropout']) if 'Dropout' in config_dict  else (0.,0.)
+    add_range = parse_range(config_dict['Add']) if 'Add' in config_dict  else (0.,0.)
+    multiply_range = parse_range(config_dict['Multiply']) if 'Multiply' in config_dict  else (0.,0.)
+    elastic_transform_alpha_range = parse_range(config_dict['ElasticTransformationAlpha']) if 'ElasticTransformationAlpha' in config_dict  else (0.,0.)
+    elastic_transform_sigma = float(config_dict['ElasticTransformationSigma']) if 'ElasticTransformationSigma' in config_dict else 0.2
+    perspective_transform_scale = parse_range(config_dict['PerspectiveTransformScale']) if 'PerspectiveTransformScale' in config_dict  else (0.,0.)
+
+    return dict(scale_x = scale_range_width,
+                scale_y = scale_range_height,
+                translate_x = width_shift_range,
+                translate_y = height_shift_range,
+                shear_range = shear_range, 
+                rotation_range = rotation_range,
+                gaussian_blur_range = gaussian_blur_range,
+                median_blur_kernel = median_blur_kernel,
+                average_blur_kernel = average_blur_kernel,
+                additive_gaussian_noise_scale = additive_gaussian_noise_scale,
+                dropout_range = dropout_range,
+                add_range = add_range,
+                multiply_range = multiply_range,
+                elastic_transform_alpha_range = elastic_transform_alpha_range,
+                elastic_transform_sigma = elastic_transform_sigma,
+                perspective_transform_scale = perspective_transform_scale)
+
+
+def parse_range(line):
+    vals = line.split(',')
+    x1 = float(vals[0].strip())
+    x2 = float(vals[1].strip())
+    return (x1,x2)
+
 
 class MicroblinkBasePreprocessorImgaugCenterLoss(BasePreprocessor):
     def __init__(self, input_directory, config_dict, name = "MicroblinkBasePreprocessorImgaugCenterLoss"):
@@ -133,12 +143,28 @@ class MicroblinkBasePreprocessorImgaugCenterLoss(BasePreprocessor):
 
         self.TEST_PERCENTAGE = float(config_dict['TestPercentage'])
 
+        self.keyword_args = get_keyword_args(config_dict)
+
+        print('Augmentation parameters')
+        for key in self.keyword_args.keys():
+            print(key, ' - ', self.keyword_args[key])
+            
         #augmentations
-        self.width_shift_range = float(config_dict['WidthShiftRange']) if 'WidthShiftRange' in config_dict else 0.
-        self.height_shift_range = float(config_dict['HeightShiftRange']) if 'HeightShiftRange' in config_dict  else 0.
-        self.shear_range = float(config_dict['ShearRange']) if 'ShearRange' in config_dict  else 0.
-        self.rotation_range = int(config_dict['RotationRange']) if 'RotationRange' in config_dict  else 0
-        self.curiculum_epochs = int(config_dict['CuriculumEpochs']) if 'CuriculumEpochs' in config_dict else 0
+        # self.width_shift_range = parse_range(config_dict['WidthShiftRange']) if 'WidthShiftRange' in config_dict else (0.,0.)
+        # self.height_shift_range = parse_range(config_dict['HeightShiftRange']) if 'HeightShiftRange' in config_dict  else (0.,0.)
+        # self.shear_range = parse_range(config_dict['ShearRange']) if 'ShearRange' in config_dict  else (0.,0.)
+        # self.scale_range = parse_range(config_dict['ScaleRange']) if 'ScaleRange' in config_dict  else (0.,0.)
+        # self.rotation_range = parse_range(config_dict['RotationRange']) if 'RotationRange' in config_dict  else (0.,0.)
+        # self.gaussian_blur_range = parse_range(config_dict['GaussianBlur']) if 'GaussianBlur' in config_dict  else (0.,0.)
+        # self.median_blur_range = parse_range(config_dict['MedianBlur']) if 'MedianBlur' in config_dict  else (0.,0.)
+        # self.average_blur_range = parse_range(config_dict['AverageBlur']) if 'AverageBlur' in config_dict  else (0.,0.)
+        # self.additive_gaussian_noise_range = parse_range(config_dict['AdditiveGaussianNoise']) if 'AdditiveGaussianNoise' in config_dict  else (0.,0.)
+        # self.dropout_range = parse_range(config_dict['Dropout']) if 'Dropout' in config_dict  else (0.,0.)
+        # self.add_range = parse_range(config_dict['Add']) if 'Add' in config_dict  else (0.,0.)
+        # self.multiply_range = parse_range(config_dict['Multiply']) if 'Multiply' in config_dict  else (0.,0.)
+        # self.elastic_transform_range = parse_range(config_dict['ElasticTransformation']) if 'ElasticTransformation' in config_dict  else (0.,0.)
+        # self.perspective_transform_range = parse_range(config_dict['PerspectiveTransform']) if 'PerspectiveTransform' in config_dict  else (0.,0.)
+        # self.elastic_transform_sigma = float(config_dict['ElasticTransformationSigma']) if 'ElasticTransformationSigma' in config_dict else 0.2
 
         self.le = preprocessing.LabelEncoder()
         self.X_train = []
@@ -209,25 +235,13 @@ class MicroblinkBasePreprocessorImgaugCenterLoss(BasePreprocessor):
                 yield X1, Y
 
     def get_train_generator(self, batch_size):  
-        self.TRAIN_BATCH_SIZE = batch_size      
-        datagen_args = dict(width_shift_range = self.width_shift_range,
-                            height_shift_range = self.height_shift_range,
-                            shear_range = self.shear_range, 
-                            rotation_range = self.rotation_range)
-
-        # image_datagen = image.ImageDataGenerator(**datagen_args)
-        # image_datagen = image.ImageDataGenerator()
-
-        # return self.generator_wrapper(self.X_train, self.y_train, image_datagen, batch_size)
-        return GeneratorWrapper(self.X_train, self.y_train, self.curiculum_epochs, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), datagen_args, self.process_data)
+        self.TRAIN_BATCH_SIZE = batch_size   
+        return GeneratorWrapper(self.X_train, self.y_train, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), self.keyword_args, self.process_data)
 
     def get_validation_generator(self, batch_size): 
         self.VALIDATION_BATCH_SIZE = batch_size
 
-        # image_datagen = image.ImageDataGenerator()
-
-        # return self.generator_wrapper(self.X_validation, self.y_validation, image_datagen, batch_size, shuffle=False)
-        return GeneratorWrapper(self.X_validation, self.y_validation, self.curiculum_epochs, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), {}, self.process_data)
+        return GeneratorWrapper(self.X_validation, self.y_validation, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), {}, self.process_data)
 
     def get_test_generator(self, batch_size):
         pass

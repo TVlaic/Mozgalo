@@ -11,10 +11,11 @@ from sklearn.model_selection import train_test_split
 from keras.utils import Sequence
 from .base_preprocessor import BasePreprocessor
 
+import cv2
+
 class GeneratorWrapper(Sequence):
     def __init__(self, x, y, curiculum_epochs, batch_size, image_shape, keyword_args, preprocess_data_func):
         self.x, self.y = x, y
-        # self.datagen = datagen
         self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS = image_shape
         self.batch_size = batch_size
         self.keyword_args = keyword_args
@@ -46,18 +47,6 @@ class GeneratorWrapper(Sequence):
         """
         self.epoch_num +=1
         self.datagen = self.create_datagen()
-        # curiculum_epochs = 4
-        # if len(self.keyword_args.keys()) == 0:
-        #     return
-        # weight = min(1, self.epoch_num/curiculum_epochs)
-        # new_datagen = {}
-        # for key in self.keyword_args:
-        #     if isinstance(self.keyword_args[key], numbers.Number):
-        #         new_datagen[key] = self.keyword_args[key] * weight
-        #     else:
-        #         new_datagen[key] = self.keyword_args[key]
-
-        # self.datagen = image.ImageDataGenerator(**new_datagen)
 
     def create_datagen(self):
         if len(self.keyword_args.keys()) == 0:
@@ -118,12 +107,15 @@ class MicroblinkBasePreprocessor(BasePreprocessor):
         pass
 
     def process_data(self, x):
-        x = imread(x, as_grey = self.IMG_CHANNELS==1)
+        if self.IMG_CHANNELS==1:
+            x = cv2.imread(x, 0)
+        else:
+            x = cv2.imread(x)
 
         if self.top_side_only:
             x = x[:x.shape[0]//3]
 
-        x = resize(x, (self.IMG_HEIGHT, self.IMG_WIDTH), mode='constant')#, mode='constant', preserve_range=True)
+        x = cv2.resize(x, (self.IMG_WIDTH, self.IMG_HEIGHT))#, mode='constant', preserve_range=True)
         if len(x.shape) != 3 and self.IMG_CHANNELS == 3:
             x = np.dstack([x,x,x])
         elif self.IMG_CHANNELS == 1:
@@ -158,18 +150,11 @@ class MicroblinkBasePreprocessor(BasePreprocessor):
                             shear_range = self.shear_range, 
                             rotation_range = self.rotation_range)
 
-        # image_datagen = image.ImageDataGenerator(**datagen_args)
-        # image_datagen = image.ImageDataGenerator()
-
-        # return self.generator_wrapper(self.X_train, self.y_train, image_datagen, batch_size)
         return GeneratorWrapper(self.X_train, self.y_train, self.curiculum_epochs, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), datagen_args, self.process_data)
 
     def get_validation_generator(self, batch_size): 
         self.VALIDATION_BATCH_SIZE = batch_size
-
-        # image_datagen = image.ImageDataGenerator()
-
-        # return self.generator_wrapper(self.X_validation, self.y_validation, image_datagen, batch_size, shuffle=False)
+        
         return GeneratorWrapper(self.X_validation, self.y_validation, self.curiculum_epochs, batch_size, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), {}, self.process_data)
 
     def get_test_generator(self, batch_size):

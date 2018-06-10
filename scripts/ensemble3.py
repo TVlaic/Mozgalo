@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 
-results_path = '../outputs/results_for_ansambling/'
+results_path = '../outputs/results_for_ensembling/'
 results_path = os.path.abspath(results_path)
 
 merged_results = []

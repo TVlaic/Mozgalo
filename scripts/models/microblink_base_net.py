@@ -16,7 +16,7 @@ import keras.layers as KL
 from sklearn.metrics import f1_score
 
 from .base_network import BaseNetwork
-from .custom_layers.SpatialTransformLayer import SpatialTransformLayer
+from .custom_layers.spatial_transform_layer import SpatialTransformLayer
 
 from skimage.transform import resize
 from skimage.io import imread

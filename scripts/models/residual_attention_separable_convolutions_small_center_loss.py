@@ -2,9 +2,9 @@ import numpy as np
 
 import keras
 from keras.models import Model, Sequential
-from keras.layers import Input, add, BatchNormalization, Activation, Lambda, GlobalAveragePooling2D
+from keras.layers import Input, add, BatchNormalization, Activation, Lambda, GlobalAveragePooling2D, GlobalMaxPooling2D, Embedding
 from keras.layers.core import Dense, Dropout, Activation, Flatten, Layer
-from keras.layers.convolutional import Conv2D, MaxPooling2D, UpSampling2D
+from keras.layers.convolutional import SeparableConv2D, MaxPooling2D, UpSampling2D
 from keras.layers.core import Dropout, Lambda
 from keras.utils import np_utils, generic_utils
 from keras.optimizers import Adam, SGD
@@ -20,46 +20,55 @@ from .custom_layers.residual_layers import *
 
 from skimage.transform import resize
 from skimage.io import imread
+
+import tensorflow as tf
 import matplotlib.pyplot as plt
 
-class ResidualAttentionNet(BaseNetwork):
-    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionNet", train = True):
+def l2_embedding_loss(y_true, y_pred):
+    return y_pred
+
+class ResidualAttentionNetSeparableConvolutionsSmallCenterLoss(BaseNetwork):
+    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionNetSeparableConvolutionsSmallCenterLoss", train = True):
         BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name, train = train)
         self.p = int(config_dict['p'])
         self.r = int(config_dict['r'])
         self.t = int(config_dict['t'])
+        self.center_loss_strength = float(config_dict['CenterLossStrength']) if 'CenterLossStrength' in config_dict  else 0.5
 
     def get_network(self):
 
         inputs = Input(self.preprocessor.get_shape())
         outputs = Lambda(lambda x: (x /255. -0.5) * 2)(inputs)
 
-        outputs = Conv2D(32, (7, 7), strides = [1,1], padding='same', activation = 'relu', name = 'classification_conv_1')(inputs)
+        outputs = SeparableConv2D(8, (7, 7), strides = [2,2], padding='same', activation = 'relu', name = 'classification_conv_1')(outputs)
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_1')(outputs)
 
-        outputs = Residual(32, 64, outputs)
+        outputs = Residual(8, 16, outputs)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_2')(outputs)
-        outputs = Residual(64, 128, outputs)
+        outputs = Residual(16, 32, outputs)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_3')(outputs) 
-        outputs = Residual(128, 256, outputs)
+        outputs = Residual(32, 64, outputs)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
         outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_4')(outputs)
-        outputs = Residual(256, 512, outputs)
+        outputs = Residual(64, 128, outputs)
 
+        outputs = BatchNormalization()(outputs) 
         outputs = GlobalAveragePooling2D()(outputs)
-        outputs = Dense(256, activation = 'relu', name = 'classification_dense_1')(outputs)
-        outputs = Dense(self.number_of_classes, activation='softmax', name = 'classification_dense_probs')(outputs)
+        # outputs = GlobalMaxPooling2D()(outputs)
+        outputs = Dense(256, name = 'classification_dense_1', activation='relu')(outputs)
+        center_loss_layer = outputs
+        outputs = Dense(self.number_of_classes, activation='softmax', name = 'class_prob')(center_loss_layer)
 
-        model = Model(inputs=[inputs], outputs=[outputs])
-        model.compile(loss='categorical_crossentropy', optimizer=Adam(0.0001), metrics=[categorical_accuracy])
-        model.summary()
-
-        # X_in = model.input
-        # X_transformed = model.layers[1].output
-        # print(model.layers[1].name)
-        # self.transformation_operation = K.function([X_in], [X_transformed])
+        lambda_c = self.center_loss_strength
+        input_target = Input(shape=(1,)) # single value ground truth labels as inputs
+        centers = Embedding(self.number_of_classes,256)(input_target)
+        l2_loss = Lambda(lambda x: K.sum(K.square(x[0]-x[1][:,0]),1,keepdims=True),name='l2_loss')([center_loss_layer,centers])
+        model = Model(inputs=[inputs,input_target],outputs=[outputs,l2_loss])        
+        model.compile(loss=["categorical_crossentropy", l2_embedding_loss],loss_weights=[1,lambda_c], optimizer=Adam(0.0001), metrics=[categorical_accuracy])
+        if self.train:
+            model.summary()
 
         return model
 

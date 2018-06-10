@@ -19,7 +19,7 @@ from keras.layers.merge import concatenate
 from sklearn.metrics import f1_score
 
 from .base_network import BaseNetwork
-from .custom_layers.SpatialTransformLayer import SpatialTransformLayer
+from .custom_layers.residual_layers import *
 
 from skimage.transform import resize
 from skimage.io import imread
@@ -43,7 +43,8 @@ def conv2d_bn(x, nb_filter, num_row, num_col,
                       use_bias=use_bias,
                       kernel_regularizer=regularizers.l2(0.00004),
                       kernel_initializer=initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='normal', seed=None))(x)
-    x = BatchNormalization(axis=channel_axis, momentum=0.9997, scale=False)(x)
+    #x = BatchNormalization(axis=channel_axis, momentum=0.9997, scale=False)(x)
+    x = BatchNormalization(axis=channel_axis)(x)#, momentum=0.9997, scale=False)(x)
     x = Activation('relu')(x)
     return x
 
@@ -85,100 +86,11 @@ def block_reduction_b(input, num_output):
     x = concatenate([branch_0, branch_1, branch_2], axis=channel_axis)
     return x
 
-
-def conv_block(feat_maps_out, prev):
-    prev = BatchNormalization()(prev) # Specifying the axis and mode allows for later merging
-    prev = Activation('relu')(prev)
-    prev = Conv2D(feat_maps_out, (3, 3), padding='same')(prev) 
-    prev = BatchNormalization()(prev) # Specifying the axis and mode allows for later merging
-    prev = Activation('relu')(prev)
-    prev = Conv2D(feat_maps_out, (3, 3), padding='same')(prev) 
-    return prev
-
-
-def skip_block(feat_maps_in, feat_maps_out, prev):
-    if feat_maps_in != feat_maps_out:
-        # This adds in a 1x1 convolution on shortcuts that map between an uneven amount of channels
-        prev = Conv2D(feat_maps_out, (1, 1), padding='same')(prev)
-    return prev 
-
-
-def Residual(feat_maps_in, feat_maps_out, prev_layer):
-    '''
-    A customizable residual unit with convolutional and shortcut blocks
-    Args:
-      feat_maps_in: number of channels/filters coming in, from input or previous layer
-      feat_maps_out: how many output channels/filters this block will produce
-      prev_layer: the previous layer
-    '''
-
-    skip = skip_block(feat_maps_in, feat_maps_out, prev_layer)
-    conv = conv_block(feat_maps_out, prev_layer)
-    return add([skip, conv]) # the residual connection
-
-def ResidualAttention(inputs, p = 1, t = 2, r = 1):
-    channel_axis = -1
-    num_channels = inputs._keras_shape[channel_axis]
-    
-    first_residuals = inputs
-    for i in range(p):
-        first_residuals = Residual(num_channels, num_channels, first_residuals)
-        
-    output_trunk = first_residuals    
-    for i in range(t):
-        output_trunk = Residual(num_channels, num_channels, output_trunk)
-        
-
-    size1 = first_residuals._keras_shape[1:3]
-    output_soft_mask = MaxPooling2D(pool_size=(2,2), padding='same')(first_residuals) 
-    for i in range(r):
-        output_soft_mask = Residual(num_channels, num_channels, output_soft_mask)
-    
-    #skip connection
-    output_skip_connection = Residual(num_channels, num_channels, output_soft_mask)
-    
-    #2r residual blocks and first upsampling 
-    size2 = output_soft_mask._keras_shape[1:3]
-    output_soft_mask = MaxPooling2D(pool_size=(2,2), padding='same')(output_soft_mask) 
-    for i in range(2*r):
-        output_soft_mask = Residual(num_channels, num_channels, output_soft_mask)
-    # output_soft_mask = UpSampling2D([2, 2])(output_soft_mask)
-    output_soft_mask = Lambda(lambda x: tf.image.resize_images(x,
-                                                size2,
-                                                method=tf.image.ResizeMethod.BILINEAR,
-                                                align_corners=False
-                                            ))(output_soft_mask)
-
-
-
-    #addition of the skip connection
-    output_soft_mask = add([output_soft_mask, output_skip_connection])    
-    #last r blocks of residuals and upsampling
-    for i in range(r):
-        output_soft_mask = Residual(num_channels, num_channels, output_soft_mask)
-    # output_soft_mask = UpSampling2D([2, 2])(output_soft_mask)
-    output_soft_mask = Lambda(lambda x: tf.image.resize_images(x,
-                                                size1,
-                                                method=tf.image.ResizeMethod.BILINEAR,
-                                                align_corners=False
-                                            ))(output_soft_mask)
-    
-    #final attention output
-    output_soft_mask = Conv2D(num_channels, (1,1), activation='relu')(output_soft_mask)
-    #final attention output
-    output_soft_mask = Conv2D(num_channels, (1,1), activation='sigmoid')(output_soft_mask)
-    
-    output = Lambda(lambda x:(1 + x[0]) * x[1])([output_soft_mask,output_trunk])
-    for i in range(p):
-        output = Residual(num_channels, num_channels, output)
-        
-    return output
-
 def l2_embedding_loss(y_true, y_pred):
     return y_pred
-
-class ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLossNoBnorm(BaseNetwork):
-    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLossNoBnorm", train = True):
+    
+class ResidualAttentionInceptionReductionNetSmallCenterLoss(BaseNetwork):
+    def __init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name = "ResidualAttentionInceptionReductionNetSmallCenterLoss", train = True):
         BaseNetwork.__init__(self, output_directory, checkpoint_directory, config_dict, preprocessor, name=name, train = train)
         self.p = int(config_dict['p'])
         self.r = int(config_dict['r'])
@@ -194,10 +106,12 @@ class ResidualAttentionInceptionReductionNetSmallDifferentInterpolationCenterLos
 
         outputs = Residual(8, 16, outputs)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
+        outputs = BatchNormalization()(outputs)
         # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_2')(outputs)
         # outputs = Residual(16, 32, outputs)
         outputs = block_reduction_a(outputs, num_output = 32)
         outputs = ResidualAttention(outputs, p = self.p, t = self.t, r = self.r)
+        outputs = BatchNormalization()(outputs)
         # outputs = MaxPooling2D(pool_size=(3,3), strides = [2,2], padding='SAME' , name = 'classification_maxpool_3')(outputs) 
         # outputs = Residual(32, 64, outputs)
         outputs = block_reduction_b(outputs, num_output = 64)
