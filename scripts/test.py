@@ -15,23 +15,49 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 from skimage.io import imread
 
 import warnings
+import re
+from datetime import datetime
+
+def sorting_key_datetime(value):
+    matchObj = re.match( r'(\d{4})-(\d{2})-(\d{2})__(\d{2})_(\d{2})_(\d{2})', value, re.M|re.I)
+    year = int(matchObj.group(1))
+    month = int(matchObj.group(2))
+    day = int(matchObj.group(3))
+    hour = int(matchObj.group(4))
+    minute = int(matchObj.group(5))
+    second = int(matchObj.group(6))
+    return datetime(year, month, day, hour, minute, second)
+
+def sorting_key_epoch(value):
+    matchObj = re.match( r'.*-(\d{4})\.hdf5', value, re.M|re.I)
+    epoch = int(matchObj.group(1))
+    return epoch
+
+def get_last_model_path(preprocessor_name, model_name, checkpoints_dir):
+    path = os.path.abspath(checkpoints_dir)
+    path = os.path.join(path, model_name)
+    path = os.path.join(path, preprocessor_name)
+    last_dir = sorted(os.listdir(path), key = sorting_key_datetime, reverse = True)[0]
+
+    path = os.path.join(path, last_dir)
+
+    checkpoints = [x for x in os.listdir(path) if 'hdf5' in x]
+    last_checkpoint = sorted(checkpoints, key = sorting_key_epoch, reverse = True)[0]
+
+    path = os.path.join(path, last_checkpoint)
+    return path
 
 parser = argparse.ArgumentParser()
 parser.add_argument("ModelName", help= "Model class name")
 parser.add_argument("PreprocessorName", help = "Preprocessor class name")
+parser.add_argument("-p", "--path", type=str,
+                    help="Path to model checkpoint, if the argument is not given the last one will be loaded")
+
 args = parser.parse_args()
 
 config = configparser.ConfigParser()
 config.optionxform = str
 config.read("./config.cfg")
-
-'''
-for sect in config.sections():
-    section_items = dict(config.items(sect))
-    print("Section %s" % sect)
-    for key in section_items.keys():
-        print("Key: %s" % section_items[key])
-''' and None
 
 model_parameters = dict(config.items(args.ModelName))
 preprocessor_parameters = dict(config.items(args.PreprocessorName))
@@ -55,10 +81,10 @@ ml_class= getattr(module, args.ModelName)
 my_model = ml_class(result_path, checkpoint_dir, model_parameters, preprocessor, train=False)
 my_model.init_network()
 
+model_path = args.path if args.path else get_last_model_path(args.PreprocessorName, args.ModelName, checkpoint_dir)
+print("LOADING MODEL %s" % model_path)
+my_model.model.load_weights(model_path, by_name = True, skip_mismatch = True)
 
-# my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-29__14_02_57/0.0209-0019.hdf5', by_name = True, skip_mismatch = True)
-my_model.model.load_weights('/home/user/Mozgalo/checkpoints/ResidualAttentionNetSmallDifferentInterpolationCenterLoss/MicroblinkBasePreprocessorImgaugCenterLoss/2018-04-29__14_02_57/0.0191-0025.hdf5', by_name = True, skip_mismatch = True)
-# raise Exception("definiraj model")
 root = '../inputs/test'
 root = os.path.abspath(root)
 warnings.simplefilter('ignore', DeprecationWarning) #zbog sklearna i numpy deprecationa u label encoderu
