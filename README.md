@@ -182,4 +182,4 @@ _[2]_ Ce Qi and Fei Su. Contrastive-center loss for deep neural networks. _CoRR,
 ## Acknowledgements
 <a id='Acknowledgements'></a>
 
-Authors of this repo: Nikola Mrzljak, Toni Vlaić
+Authors of this repo: Toni Vlaić, Nikola Mrzljak
