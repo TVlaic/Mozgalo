@@ -120,8 +120,34 @@ source init.sh
 
 The script will create the folder directory, create a virtual environment and install all the required libraries.
 
-After everything is set up change the _[Data]_ properties of inputs depending on where you placed your training data. When you configured the paths in config.cfg you can start training your first model by opening a terminal in the scripts folder and running the following command:
+The project structure looks like this:
 
+    .    
+    ├── scripts             # root folder for all py and ipynb files
+    │   ├── models          # contains model implementation
+    │       ├── ..
+    │   ├── preprocessors   # contains preprocessor implementations
+    │       ├── ..
+    │   ├── train.py        # used for model training
+    │   ├── test.py         # used for model testing
+    │   └── config.cfg      # model and preprocessor configuration file
+    ├── inputs              # root folder for all py and ipynb files
+    │   ├── train           # directory with class directories for training
+    │       ├── class1      # contains images of class 1
+    │          ├── ..
+    │       ├── class2      # contains images of class 2
+    │          ├── ..
+    │   ├── test            # directory with images just for testing
+    │       ├── ..
+    ├── checkpoints         # folder where all model checkpoints and tensorboard logs will be saved
+    │   ├── ..              # hierarchy ./modelname/preprocessorname/date_of_experiment/checkpoint.h5
+    ├── outputs             # folder where all model outputs will be saved if it has any
+    │   ├── ..              # hierarchy ./modelname/preprocessorname/date_of_experiment/checkpoint.h5
+    ├── init.sh             # bash initialization script
+    ├── requirements.txt    # list of required packages
+    └── ...
+
+After everything is set up change the _[Data]_ properties of inputs depending on where you placed your training data. When you configured the paths in config.cfg you can start training your first model by opening a terminal in the scripts folder and running the following command:
 
 ```
 python train.py [ModelName] [PreprocessorName]
