@@ -131,7 +131,7 @@ The project structure looks like this:
     │   ├── train.py        # used for model training
     │   ├── test.py         # used for model testing
     │   └── config.cfg      # model and preprocessor configuration file
-    ├── inputs              # root folder for all py and ipynb files
+    ├── inputs              # root folder for train and test directories
     │   ├── train           # directory with class directories for training
     │       ├── class1      # contains images of class 1
     │          ├── ..
