@@ -71,7 +71,7 @@ Smiths receipt example
 ## Results
 <a id='Results'></a>
 
-All networks listed bellow are trained on 70% split of training data created with a fixed seed of 42 which translates into 31500 samples. Residual Attention Networks are from the module with _small_ postfix and have a size of approximately 5 Mb.
+All networks listed bellow are trained on 70% split of training data created with a fixed seed of 42 which translates into 31500 samples. Residual Attention Networks are from modules with _small_ in their name and have a size of approximately 5 Mb.
 
 | Network  | F1 - test score |
 | ------------- | ------------- |
