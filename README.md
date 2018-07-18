@@ -48,7 +48,7 @@ Nvidia GPU with installed Cuda 9
 ## Getting the dataset
 <a id='Data'></a>
 
-Since the dataset is the property of Microblink we are not allowed to publicly share it, but here are some examples of what it looks like.
+Since the dataset is the property of Microblink we are not allowed to publicly share it, but here are some examples of what it looks like. 
 
 <table  border="0" width="100%" style="border:none">
 <tr width="100%" border="0" style="border:none">
@@ -67,6 +67,7 @@ Smiths receipt example
 </tr>
 </table>
 
+**Note** - _although the dataset is not available, the code is not dependant on the dataset and can be run on any classification task, as long as the images are arranged in the folder structure explained below._
 
 ## Results
 <a id='Results'></a>
